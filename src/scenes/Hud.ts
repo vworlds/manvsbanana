@@ -6,7 +6,7 @@ import { bus } from '../bus';
 import { SHOUT, TALK } from '../fonts';
 import { STAGE_START, type Stage } from '../logic/ripeness';
 import { state } from '../state/GameState';
-import { bubble } from '../fx/Bubble';
+import { bubble, bubbleSize } from '../fx/Bubble';
 import { lineFrom } from '../logic/lines';
 import { DAD_OPENER, DAD_REPLY, WIFE_GIVE_UP, WIFE_NAGS, WIFE_TEXTS } from '../logic/texts';
 
@@ -139,7 +139,10 @@ export class Hud extends Phaser.Scene {
   private say(s: Say) {
     this.face.setFace(s.eyes, s.mouth);
     this.faceBubble?.destroy();
-    this.faceBubble = bubble(this, W - 470, 110, s.text, { tailX: W - 250, tailY: 110, width: 360, ms: s.ms, size: undefined });
+    // sits just left of the face panel, tail pointing right at him
+    const b = bubble(this, W - 470, 110, s.text, { tailX: W - 250, tailY: 110, width: 360, ms: s.ms });
+    b.x = W - 255 - 44 - bubbleSize(b).w / 2;
+    this.faceBubble = b;
     this.time.delayedCall(s.ms, () => this.face.setFace('worried', 'grit'));
   }
 

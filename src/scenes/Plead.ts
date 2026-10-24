@@ -6,8 +6,8 @@ import { dealRound, familyOrder, reaction, redeemed, resultOf, score, startingRe
 import { EMERGENCY, ENTRANCE, PARDON, PROMISE } from '../logic/pleadLines';
 import { lineFrom } from '../logic/lines';
 import { state } from '../state/GameState';
-import { commonKeys, tweenP, wait } from './common';
-import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, type Room } from './room';
+import { commonKeys, tweenP } from './common';
+import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, type Room, waitRead } from './room';
 
 const DAD_FACE: Record<Tone, [Eyes, Mouth]> = {
   sweet: ['worried', 'smile'],
@@ -44,8 +44,9 @@ export class Plead extends Phaser.Scene {
   }
 
 
+  /** Wait, but never cut a line off before it has been read. */
   private w(ms: number) {
-    return wait(this, ms);
+    return waitRead(this, ms);
   }
 
   private async run() {

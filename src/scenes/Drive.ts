@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { Person, type Eyes, type Mouth } from '../art/Person';
 import { makeCar, makeNpcCar, type Car } from '../art/car';
-import { music, setTempo, sfx, speak } from '../audio/sfx';
+import { music, setTempo, sfx } from '../audio/sfx';
 import { bus } from '../bus';
 import { SHOUT } from '../fonts';
+import { readTime } from '../fx/Bubble';
 import { crash, freshen, isRotten, stageOf, tick, type Stage } from '../logic/ripeness';
 import {
   crowdSize,
@@ -299,20 +300,20 @@ export class Drive extends Phaser.Scene {
 
   // ------------------------------------------------------------- speech
   private say(text: string, eyes: Eyes, mouth: Mouth, ms = 1400) {
+    ms = readTime(text, ms);
     this.driver.setFace(eyes, mouth);
     bus.emit('hud:say', { text, eyes, mouth, ms });
-    speak(text);
   }
 
   /** Full-screen close-up. Never while the phone is up (it would hide it): then it's a normal line. */
   private cutIn(text: string, eyes: Eyes, mouth: Mouth, ms = 1100) {
     if (this.registry.get('phoneOpen')) return this.say(text, eyes, mouth, ms);
+    ms = readTime(text, ms);
     this.driver.setFace(eyes, mouth);
     sfx.sting();
     this.slowmo = 0.12;
     this.cutinUntil = this.time.now + ms + 900; // plus a breather before the phone may ring
     bus.emit('hud:cutin', { text, eyes, mouth, ms, stage: this.stage });
-    speak(text);
     this.time.delayedCall(ms, () => {
       if (!this.over) this.slowmo = 1;
     });
@@ -988,10 +989,11 @@ export class Drive extends Phaser.Scene {
     this.tweens.add({ targets: this.car, x: this.car.x + 380, duration: 1300, ease: 'Sine.out' });
     sfx.screech();
     this.driver.setFace('wide', 'smile');
-    bus.emit('hud:cutin', { text: driveLine('arrive'), eyes: 'wide', mouth: 'open', ms: 1300, stage: this.stage });
-    speak('I made it!');
+    const yay = driveLine('arrive');
+    const yayMs = readTime(yay, 1300);
+    bus.emit('hud:cutin', { text: yay, eyes: 'wide', mouth: 'open', ms: yayMs, stage: this.stage });
     this.registry.set('arrivalStage', this.stage);
-    this.time.delayedCall(1400, () => {
+    this.time.delayedCall(yayMs + 100, () => {
       this.cameras.main.fadeOut(250, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.stop('Hud');
@@ -1007,9 +1009,9 @@ export class Drive extends Phaser.Scene {
     this.driver.setFace('crying', 'wail');
     sfx.sad();
     const nooo = driveLine('rotten');
-    bus.emit('hud:cutin', { text: nooo, eyes: 'crying', mouth: 'wail', ms: 1600, stage: 'brown' });
-    speak(nooo);
-    this.time.delayedCall(1700, () => {
+    const noooMs = readTime(nooo, 1600);
+    bus.emit('hud:cutin', { text: nooo, eyes: 'crying', mouth: 'wail', ms: noooMs, stage: 'brown' });
+    this.time.delayedCall(noooMs + 100, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.stop('Hud');

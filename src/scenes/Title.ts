@@ -45,8 +45,8 @@ export class Title extends Phaser.Scene {
 
     const start = this.add.text(78, 570, 'PRESS SPACE / TAP TO DRIVE', { fontFamily: SHOUT, fontSize: '48px', color: '#F7D93A', stroke: '#141414', strokeThickness: 6 });
     this.tweens.add({ targets: start, alpha: 0.35, duration: 450, yoyo: true, repeat: -1 });
-    const sound = this.add.text(78, 650, `M: mute · V: voices (${soundState()})`, { fontFamily: TALK, fontSize: '16px', color: '#888' });
-    this.input.keyboard?.on('keydown', () => this.time.delayedCall(10, () => sound.setText(`M: mute · V: voices (${soundState()})`)));
+    const sound = this.add.text(78, 650, `M: mute (${soundState()})`, { fontFamily: TALK, fontSize: '16px', color: '#888' });
+    this.input.keyboard?.on('keydown', () => this.time.delayedCall(10, () => sound.setText(`M: mute (${soundState()})`)));
 
     const go = () => {
       sfx.select();

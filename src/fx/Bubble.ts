@@ -14,6 +14,11 @@ export interface BubbleOpts {
   scale?: number;
 }
 
+/** How long a line stays up so it can be read: ~1.2s plus 60ms per character (never less than asked). */
+export function readTime(text: string, ms = 0): number {
+  return Math.max(ms, 1200 + text.length * 60);
+}
+
 /** True when a line is written in capitals, so it gets the shouty treatment. */
 export const isShout = (text: string) => /[A-Z]{3}/.test(text) && text === text.toUpperCase();
 
@@ -45,9 +50,6 @@ export function bubble(scene: Phaser.Scene, x: number, y: number, text: string, 
   const sc = o.scale ?? 1;
   const tx = ((o.tailX ?? x) - x) / sc;
   const ty = ((o.tailY ?? y + h / 2 + 40) - y) / sc;
-  // tail tip: toward the speaker, but always poking out of the bubble
-  const tipX = Phaser.Math.Clamp(tx * 0.6, -w / 2 + 10, w / 2 - 10);
-  const tipY = Math.sign(ty || 1) * Math.max(Math.abs(ty * 0.6), h / 2 + (shout ? 34 : 26));
 
   g.fillStyle(0xffffff, 1);
   g.lineStyle(5, 0x141414, 1);
@@ -66,13 +68,31 @@ export function bubble(scene: Phaser.Scene, x: number, y: number, text: string, 
     g.fillRoundedRect(-w / 2, -h / 2, w, h, 22);
     g.strokeRoundedRect(-w / 2, -h / 2, w, h, 22);
   }
-  // tail
-  const bx = Phaser.Math.Clamp(tx * 0.25, -w / 2 + 30, w / 2 - 30);
-  const by = ty > 0 ? h / 2 - 3 : -h / 2 + 3;
-  const by2 = shout ? by + Math.sign(by) * 8 : by;
-  g.fillTriangle(bx - 14, by2, bx + 14, by2, tipX, tipY);
-  g.lineBetween(bx - 14, by2 + (ty > 0 ? 3 : -3), tipX, tipY);
-  g.lineBetween(bx + 14, by2 + (ty > 0 ? 3 : -3), tipX, tipY);
+  // tail: points at the speaker, always poking out of the bubble. When the
+  // speaker is beside the bubble (e.g. the HUD face panel) it comes out of the side.
+  const side = Math.abs(tx) > w / 2 && Math.abs(ty) < h / 2 + 20;
+  let b1: [number, number];
+  let b2: [number, number];
+  let tip: [number, number];
+  if (side) {
+    const sx = Math.sign(tx);
+    const edge = sx * (w / 2 - (shout ? -2 : 4));
+    const by = Phaser.Math.Clamp(ty, -h / 2 + 18, h / 2 - 18);
+    b1 = [edge, by - 14];
+    b2 = [edge, by + 14];
+    tip = [sx * (w / 2 + (shout ? 46 : 32)), Phaser.Math.Clamp(ty, -h / 2, h / 2)];
+  } else {
+    const tipX = Phaser.Math.Clamp(tx * 0.6, -w / 2 + 10, w / 2 - 10);
+    const tipY = Math.sign(ty || 1) * Math.max(Math.abs(ty * 0.6), h / 2 + (shout ? 34 : 26));
+    const bx = Phaser.Math.Clamp(tx * 0.25, -w / 2 + 30, w / 2 - 30);
+    const by = (ty > 0 ? h / 2 - 3 : -h / 2 + 3) + (shout ? Math.sign(ty || 1) * 8 : 0);
+    b1 = [bx - 14, by];
+    b2 = [bx + 14, by];
+    tip = [tipX, tipY];
+  }
+  g.fillTriangle(b1[0], b1[1], b2[0], b2[1], tip[0], tip[1]);
+  g.lineBetween(b1[0], b1[1], tip[0], tip[1]);
+  g.lineBetween(b2[0], b2[1], tip[0], tip[1]);
 
   const c = scene.add.container(x, y, [g, label]).setDepth(o.depth ?? 1000);
   c.setScale(0.2 * sc);

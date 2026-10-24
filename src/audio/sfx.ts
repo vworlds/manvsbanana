@@ -4,7 +4,6 @@ let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let musicGain: GainNode | null = null;
 let muted = readBool('mvb-muted', false);
-let voice = readBool('mvb-voice', false);
 
 function readBool(k: string, d: boolean): boolean {
   try {
@@ -43,15 +42,7 @@ export function toggleMute() {
   muted = !muted;
   writeBool('mvb-muted', muted);
   if (master && ctx) master.gain.setTargetAtTime(muted ? 0 : 0.5, ctx.currentTime, 0.02);
-  if (muted) window.speechSynthesis?.cancel();
   return muted;
-}
-export const isVoice = () => voice;
-export function toggleVoice() {
-  voice = !voice;
-  writeBool('mvb-voice', voice);
-  if (!voice) window.speechSynthesis?.cancel();
-  return voice;
 }
 
 function tone(freq: number, dur: number, type: OscillatorType = 'square', vol = 0.3, slideTo?: number, when = 0, dest?: AudioNode) {
@@ -205,18 +196,4 @@ function schedule() {
     }
     step++;
   }
-}
-
-// ---------------------------------------------------------------- voice
-/** Optional browser text-to-speech for dialogue (off by default, V toggles). */
-export function speak(text: string, who: 'man' | 'kid' | 'wife' | 'baby' = 'man') {
-  if (!voice || muted || !('speechSynthesis' in window)) return;
-  const clean = text.replace(/[*]/g, '').replace(/[^\p{L}\p{N}\s.,!?'-]/gu, '');
-  if (!clean.trim()) return;
-  const u = new SpeechSynthesisUtterance(clean);
-  u.pitch = who === 'kid' ? 1.6 : who === 'wife' ? 1.3 : who === 'baby' ? 2 : 0.8;
-  u.rate = text === text.toUpperCase() ? 1.35 : 1.1;
-  u.volume = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
 }

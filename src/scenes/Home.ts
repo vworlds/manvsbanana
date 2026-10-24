@@ -6,8 +6,8 @@ import { TALK } from '../fonts';
 import { ENTRANCE } from '../logic/pleadLines';
 import { homeLine, lineFrom } from '../logic/lines';
 import { state } from '../state/GameState';
-import { commonKeys, tweenP, wait } from './common';
-import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W } from './room';
+import { commonKeys, tweenP } from './common';
+import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, waitRead } from './room';
 
 /**
  * He made it home in time. The family eats the bananas while looking down
@@ -28,8 +28,9 @@ export class Home extends Phaser.Scene {
     void this.run();
   }
 
+  /** Wait, but never cut a line off before it has been read. */
   private w(ms: number) {
-    return wait(this, ms);
+    return waitRead(this, ms);
   }
 
 

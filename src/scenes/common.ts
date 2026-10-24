@@ -1,14 +1,13 @@
 import Phaser from 'phaser';
-import { isMuted, isVoice, toggleMute, toggleVoice, unlock } from '../audio/sfx';
+import { isMuted, toggleMute, unlock } from '../audio/sfx';
 import { TALK } from '../fonts';
 
-/** Audio unlock + M (mute) / V (voice) toggles + a small status toast. */
+/** Audio unlock + M (mute) toggle + a small status toast. */
 export function commonKeys(scene: Phaser.Scene) {
   const kb = scene.input.keyboard;
   scene.input.on('pointerdown', unlock);
   kb?.on('keydown', unlock);
   kb?.on('keydown-M', () => toast(scene, isMutedLabel(toggleMute())));
-  kb?.on('keydown-V', () => toast(scene, toggleVoice() ? 'Voices ON (browser speech)' : 'Voices OFF'));
 }
 
 const isMutedLabel = (m: boolean) => (m ? 'Sound OFF' : 'Sound ON');
@@ -21,7 +20,7 @@ export function toast(scene: Phaser.Scene, text: string) {
   scene.tweens.add({ targets: t, alpha: 0, delay: 1000, duration: 400, onComplete: () => t.destroy() });
 }
 
-export const soundState = () => `${isMuted() ? 'muted' : 'sound on'} · ${isVoice() ? 'voices on' : 'voices off'}`;
+export const soundState = () => (isMuted() ? 'muted' : 'sound on');
 
 /** Promise-based wait on the scene clock (respects scene pause/timeScale). */
 export function wait(scene: Phaser.Scene, ms: number) {

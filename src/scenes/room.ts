@@ -4,8 +4,7 @@ import { makeCar } from '../art/car';
 import { tweenP, wait } from './common';
 import { debug } from '../state/GameState';
 import { homeLine } from '../logic/lines';
-import { bubble, bubbleSize, type BubbleOpts } from '../fx/Bubble';
-import { speak } from '../audio/sfx';
+import { bubble, bubbleSize, readTime, type BubbleOpts } from '../fx/Bubble';
 import { sfx } from '../audio/sfx';
 
 export const W = 1280;
@@ -74,7 +73,7 @@ export function addFlies(scene: Phaser.Scene, r: Room, n = 4) {
 export type Who = 'man' | 'kid' | 'wife' | 'baby';
 
 /** Speech bubble above a character, added to the world layer so it zooms with the camera. */
-export function sayAt(scene: Phaser.Scene, r: Room, who: Who, target: { x: number; y: number }, text: string, o: BubbleOpts & { dy?: number } = {}) {
+export function sayAt(scene: Phaser.Scene, r: Room, _who: Who, target: { x: number; y: number }, text: string, o: BubbleOpts & { dy?: number } = {}) {
   const cam = scene.cameras.main;
   const z = cam.zoom;
   // visible world rect (computed from scroll, since worldView only refreshes on render)
@@ -85,17 +84,25 @@ export function sayAt(scene: Phaser.Scene, r: Room, who: Who, target: { x: numbe
   const sc = 1 / z;
   let x = target.x + (target.x > vx + vw / 2 ? -60 : 60) * sc;
   let y = target.y - (o.dy ?? 170) * Math.max(sc, 0.75);
-  const b = bubble(scene, x, y, text, { tailX: target.x, tailY: target.y - 60 * sc, width: 420, ...o, scale: sc });
+  // give the line time to be read; scenes wait for it before moving on (see waitRead)
+  const ms = o.ms === 0 ? 0 : readTime(text, o.ms ?? 1800);
+  if (ms) scene.data.set('readUntil', scene.time.now + ms);
+  const b = bubble(scene, x, y, text, { tailX: target.x, tailY: target.y - 60 * sc, width: 420, ...o, ms, scale: sc });
   const { w, h } = bubbleSize(b);
   const m = 16 * sc;
   x = Phaser.Math.Clamp(x, vx + (w / 2) * sc + m, vx + vw - (w / 2) * sc - m);
   y = Phaser.Math.Clamp(y, vy + (h / 2) * sc + m + 20 * sc, vy + vh - (h / 2) * sc - m);
   b.destroy();
-  const b2 = bubble(scene, x, y, text, { tailX: target.x, tailY: target.y - 60 * sc, width: 420, ...o, scale: sc });
+  const b2 = bubble(scene, x, y, text, { tailX: target.x, tailY: target.y - 60 * sc, width: 420, ...o, ms, scale: sc });
   r.world.add(b2);
-  speak(text, who);
   sfx.blip();
   return b2;
+}
+
+/** Wait `ms`, or longer if a line is still up and hasn't had its reading time yet. */
+export function waitRead(scene: Phaser.Scene, ms: number) {
+  const until = (scene.data.get('readUntil') as number | undefined) ?? 0;
+  return wait(scene, Math.max(ms, until - scene.time.now + 250));
 }
 
 /** Hard cut: instantly frame a point at a zoom level, like the short's editing. */
@@ -128,7 +135,11 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
   car.driver.setFace(stage === 'brown' ? 'angry' : 'wide', stage === 'brown' ? 'open' : 'smile');
   const spin = scene.time.addEvent({ delay: 16, loop: true, callback: () => car.roll(20) });
   const HALF = 142; // half the car's length at this scale
-  const say = (x: number, y: number, text: string, ms = 1100) => keep(bubble(scene, x, y, text, { ms, width: 300, size: 30 }));
+  const say = (x: number, y: number, text: string, ms = 1100) => {
+    const t = readTime(text, ms);
+    scene.data.set('readUntil', scene.time.now + t);
+    return keep(bubble(scene, x, y, text, { ms: t, width: 300, size: 30 }));
+  };
   const impact = (strength = 0.02) => {
     spin.remove();
     sfx.crash();
@@ -187,6 +198,6 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     await wait(scene, 450);
   }
   car.driver.setFace('shut', 'grit');
-  await wait(scene, 550);
+  await waitRead(scene, 550);
   for (const o of objs) o.destroy();
 }

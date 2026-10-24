@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 import { Person } from '../art/Person';
-import { music, sfx, speak } from '../audio/sfx';
+import { music, sfx } from '../audio/sfx';
 import { caption } from '../fx/Bubble';
 import { SHOUT, TALK } from '../fonts';
 import { state } from '../state/GameState';
 import { homeLine } from '../logic/lines';
-import { commonKeys, tweenP, wait, waitForInput } from './common';
-import { addFlies, buildRoom, cut, H, sayAt, SPOTS, W, type Room } from './room';
+import { commonKeys, tweenP, waitForInput } from './common';
+import { addFlies, buildRoom, cut, H, sayAt, SPOTS, W, type Room, waitRead } from './room';
 
 /**
  * Act 3. The father fails, face-plants into the rotten bananas, and the kid
@@ -30,8 +30,9 @@ export class Finale extends Phaser.Scene {
     void this.run();
   }
 
+  /** Wait, but never cut a line off before it has been read. */
   private w(ms: number) {
-    return wait(this, ms);
+    return waitRead(this, ms);
   }
 
   private async run() {
@@ -114,7 +115,6 @@ export class Finale extends Phaser.Scene {
     r.ui.add(iam);
     iam.setScale(2.2);
     this.tweens.add({ targets: iam, scale: 1, duration: 260, ease: 'Back.out' });
-    speak('I am father now.', 'kid');
     await this.w(2300);
     this.tweens.add({ targets: iam, alpha: 0, duration: 300 });
     kid.setFace('smug', 'smirk');
