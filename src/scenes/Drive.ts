@@ -87,6 +87,7 @@ const IDLE_LINES = [
 const PICKUP_TEXT: Record<string, string> = { ice: 'CHILLED!', fresh: 'FRESH BUNCH!', chant: "DON'T TURN YELLOW!", nitro: 'TURBO REFILL!' };
 const HOME_LINES = ['I CAN SEE THE HOUSE!', 'ALMOST THERE, BABIES!', 'HOME STRETCH! HOME STRETCH!', "HOLD ON, BANANAS! WE'RE CLOSE!"];
 const pick = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
+const NEIGHBORHOODS = ['MAPLE GROVE', 'SUNNY ACRES', 'PLEASANT HILLS', 'WILLOW CREEK', 'OAKWOOD ESTATES', 'QUIET PINES', 'CUL-DE-SAC CITY', 'MEADOW BROOK'];
 
 export class Drive extends Phaser.Scene {
   private things: Thing[] = [];
@@ -114,7 +115,10 @@ export class Drive extends Phaser.Scene {
   private tripDist = 0;
   private home = 0;
   private over = false;
-  private houseSpawned = false;
+  private junction: Phaser.GameObjects.Container | null = null;
+  /** Final stretch: the car steers itself into the middle lane (the neighbourhood entrance). */
+  private autopilot = false;
+  private middleCleared = false;
   private homeLineSaid = false;
   // traffic + road events
   private rowScroll = 0;
@@ -158,7 +162,9 @@ export class Drive extends Phaser.Scene {
     this.tripDist = 0;
     this.home = homeDistance(state.trip);
     this.over = false;
-    this.houseSpawned = false;
+    this.junction = null;
+    this.autopilot = false;
+    this.middleCleared = false;
     this.homeLineSaid = false;
     this.rowScroll = 0;
     // roughly how many events fit in this trip (about 22 m/s)
@@ -285,8 +291,8 @@ export class Drive extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------- input
-  private changeLane(d: number) {
-    if (this.over) return;
+  private changeLane(d: number, forced = false) {
+    if (this.over || (this.autopilot && !forced)) return;
     const next = Phaser.Math.Clamp(this.lane + d, 0, 2);
     if (next === this.lane) return;
     this.lane = next;
@@ -371,7 +377,8 @@ export class Drive extends Phaser.Scene {
       c.add(lamp);
       anchor.lamp = lamp;
       // red exactly when you'd arrive at normal speed: turbo through, or brake and wait
-      const v = baseSpeed(state.trip, this.elapsed) * this.recover;
+      // timed against how fast you're going right now: keep going and it's red
+      const v = Math.max(this.speed, baseSpeed(state.trip, this.elapsed) * 0.8);
       anchor.plan = lightPlan((x - 10 - (CAR_X + CAR_HALF)) / v);
       anchor.clock = 0;
       anchor.light = 'green';
@@ -595,7 +602,10 @@ export class Drive extends Phaser.Scene {
     if (isRotten(this.ripeness)) return this.rotten();
     const left = this.home - this.tripDist;
     if (left <= 0) return this.arrive();
-    if (!this.houseSpawned && left * PX_PER_M < W + 200) this.spawnHouse(left);
+    if (!this.junction && left * PX_PER_M < W + 900) this.spawnJunction(left);
+    if (left < 70 && !this.middleCleared) this.clearMiddleLane();
+    if (left < 40 && !this.autopilot) this.startAutopilot();
+    if (this.junction) this.turnOffTraffic();
     if (!this.homeLineSaid && left < this.home * 0.25) {
       this.homeLineSaid = true;
       this.say(pick(HOME_LINES), 'wide', 'open');
@@ -641,7 +651,7 @@ export class Drive extends Phaser.Scene {
     // pickups, phone, chatter
     this.nextPickup -= dt;
     this.nextIdleLine -= dt;
-    if (this.nextPickup <= 0) {
+    if (this.nextPickup <= 0 && left > 70) {
       this.spawnPickup();
       this.nextPickup = 5 + Math.random() * 4;
     }
@@ -854,18 +864,118 @@ export class Drive extends Phaser.Scene {
     if (st === 'brown') this.cutIn("THEY'RE GOING BROWN! FUUUUCK!", 'crying', 'wail');
   }
 
-  /** The house (with a HOME flag) slides in on the top sidewalk exactly at the finish line. */
-  private spawnHouse(left: number) {
-    this.houseSpawned = true;
-    const x = CAR_X + left * PX_PER_M;
-    const house = this.add.image(x, ROAD_TOP + 2, 'house').setOrigin(0.5, 1).setScale(0.55).setDepth(60);
-    this.things.push({ kind: 'decor', obj: house, lane: -1, own: 0, vy: 0, hit: false });
-    const flag = this.add
-      .text(x, ROAD_TOP - 250, 'HOME', { fontFamily: SHOUT, fontSize: '46px', color: '#F7D93A', stroke: '#141414', strokeThickness: 8 })
-      .setOrigin(0.5)
-      .setDepth(61);
-    this.tweens.add({ targets: flag, y: flag.y - 12, duration: 300, yoyo: true, repeat: -1 });
-    this.things.push({ kind: 'decor', obj: flag, lane: -1, own: 0, vy: 0, hit: false });
+  /**
+   * The end of the road: our three lanes meet a cross street (a T-junction).
+   * Beyond it the outer lanes end in grass and the middle lane carries on as
+   * the neighbourhood street, through the entrance pillars. The container's
+   * origin is the entrance, which is exactly the finish line.
+   */
+  private spawnJunction(left: number) {
+    const x = CAR_X + CAR_HALF + left * PX_PER_M;
+    const c = this.add.container(x, 0).setDepth(6);
+    const g = this.add.graphics();
+    c.add(g);
+    const midTop = (LANE_Y[0] + LANE_Y[1]) / 2 + 26; // dash line between lanes 0 and 1
+    const midBot = (LANE_Y[1] + LANE_Y[2]) / 2 + 26;
+    // arrows on the outer lanes: merge into the middle
+    for (const ax of [-1150, -750]) {
+      for (const [lane, dir] of [[0, 1], [2, -1]] as const) {
+        const y = GROUND(lane) - 40;
+        const ex = ax + 70;
+        const ey = y + dir * 34;
+        g.lineStyle(10, 0xffffff, 0.9).beginPath().moveTo(ax - 70, y).lineTo(ax, y).lineTo(ex, ey).strokePath();
+        const a = Math.atan2(ey - y, ex - ax);
+        g.fillStyle(0xffffff, 0.9).fillTriangle(
+          ex + Math.cos(a) * 22, ey + Math.sin(a) * 22,
+          ex + Math.cos(a + 2.3) * 20, ey + Math.sin(a + 2.3) * 20,
+          ex + Math.cos(a - 2.3) * 20, ey + Math.sin(a - 2.3) * 20,
+        );
+      }
+    }
+    // stop line + cross street
+    g.fillStyle(0xffffff).fillRect(-290, ROAD_TOP, 16, ROAD_BOT - ROAD_TOP);
+    g.fillStyle(0x8e8e96).fillRect(-260, 330, 220, 720 - 330);
+    g.fillStyle(0xffffff);
+    for (let y = 340; y < 720; y += 60) g.fillRect(-154, y, 8, 34);
+    g.lineStyle(6, 0x5e5e66).lineBetween(-260, 330, -260, ROAD_TOP).lineBetween(-260, ROAD_BOT, -260, 720);
+    // beyond: grass where the outer lanes end, the neighbourhood street in the middle
+    g.fillStyle(0x6dbb5a).fillRect(-40, 330, 2600, 720 - 330);
+    g.fillStyle(0xc9c9cf).fillRect(-40, midTop - 16, 2600, 16).fillRect(-40, midBot, 2600, 16);
+    g.fillStyle(0x8e8e96).fillRect(-40, midTop, 2600, midBot - midTop);
+    g.lineStyle(6, 0x141414).lineBetween(-40, 330, -40, midTop - 16).lineBetween(-40, midBot + 16, -40, 720);
+    g.lineStyle(4, 0x5e5e66).lineBetween(-40, midTop, 2560, midTop).lineBetween(-40, midBot, 2560, midBot);
+    // hedges, trees and houses in the neighbourhood
+    for (const hx of [60, 260, 520]) {
+      c.add(this.add.image(hx, midTop - 18, 'hedge').setOrigin(0.5, 1).setScale(0.7));
+      c.add(this.add.image(hx + 40, 720, 'hedge').setOrigin(0.5, 1).setScale(0.9));
+    }
+    for (const [hx, hs] of [[420, 0.33], [900, 0.36], [1400, 0.33]] as const) c.add(this.add.image(hx, midTop - 20, 'house').setOrigin(0.5, 1).setScale(hs));
+    c.add(this.add.image(700, midTop - 16, 'tree').setOrigin(0.5, 1).setScale(0.32));
+    // entrance pillars and the neighbourhood sign
+    c.add(this.add.image(20, midTop - 4, 'pillar').setOrigin(0.5, 1).setScale(0.7));
+    c.add(this.add.image(20, midBot + 40, 'pillar').setOrigin(0.5, 1).setScale(0.8));
+    const name = pick(NEIGHBORHOODS);
+    const board = this.add.rectangle(20, midTop - 175, 230, 50, 0x5e3a1e).setStrokeStyle(5, 0x141414);
+    const label = this.add.text(20, midTop - 175, name, { fontFamily: 'Georgia, serif', fontStyle: 'bold', fontSize: '24px', color: '#F7E7B0' }).setOrigin(0.5);
+    if (label.width > 210) label.setScale(210 / label.width);
+    c.add([board, label]);
+    // a STOP sign for the T-junction
+    const stop = this.add.graphics();
+    stop.fillStyle(0x777777).fillRect(-312, ROAD_TOP - 110, 8, 110);
+    const oct: Phaser.Math.Vector2[] = [];
+    for (let i = 0; i < 8; i++) oct.push(new Phaser.Math.Vector2(-308 + Math.cos((i + 0.5) * Math.PI / 4) * 30, ROAD_TOP - 130 + Math.sin((i + 0.5) * Math.PI / 4) * 30));
+    stop.fillStyle(0xd3202a).fillPoints(oct, true).lineStyle(4, 0xffffff).strokePoints(oct, true);
+    c.add(stop);
+    c.add(this.add.text(-308, ROAD_TOP - 130, 'STOP', { fontFamily: 'Arial Black, Arial', fontStyle: 'bold', fontSize: '15px', color: '#fff' }).setOrigin(0.5));
+    this.junction = c;
+    this.things.push({ kind: 'decor', obj: c, lane: -1, own: 0, vy: 0, hit: false, len: 2600 });
+  }
+
+  /** Traffic in the middle lane moves over, so the neighbourhood entrance is clear for you. */
+  private clearMiddleLane() {
+    this.middleCleared = true;
+    for (const t of this.things) {
+      if (t.kind !== 'car' || t.hit || t.lane !== 1 || t.obj.x < CAR_X - 260) continue;
+      const to = [0, 2].find((l) => this.laneFree(l, t.obj.x, 230));
+      if (to === undefined) {
+        t.hit = true; // nowhere to go: it pulls off the road
+        this.tweens.add({ targets: t.obj, alpha: 0, duration: 500, onComplete: () => t.obj.destroy() });
+        continue;
+      }
+      t.lane = to;
+      this.tweens.add({ targets: t.obj, y: GROUND(to), duration: 400, ease: 'Sine.inOut' });
+    }
+  }
+
+  /** Last stretch: steer into the middle lane, the entrance to the neighbourhood. */
+  private startAutopilot() {
+    this.autopilot = true;
+    this.invuln = Math.max(this.invuln, 4);
+    if (this.police) this.police.mode = 'leave';
+    const steer = () => {
+      if (this.over || this.lane === 1) return;
+      this.changeLane(this.lane < 1 ? 1 : -1, true);
+    };
+    steer();
+    this.time.delayedCall(300, steer);
+    this.say(pick(['Blinker on. Like a civilised man.', 'Home. HOME. Middle lane, middle lane...', 'Welcome home, bananas.']), 'wide', 'smile');
+  }
+
+  /** Traffic that reaches the junction turns off into the cross street. */
+  private turnOffTraffic() {
+    const jx = this.junction!.x;
+    for (const t of this.things) {
+      if ((t.kind !== 'car' && t.kind !== 'police') || t.hit || t.obj.x < jx - 280) continue;
+      t.hit = true;
+      t.own = 0;
+      if (t.kind === 'police') {
+        this.police?.marker.destroy();
+        this.police = null;
+        t.kind = 'car';
+      }
+      const up = t.lane === 0 || (t.lane === 1 && Math.random() < 0.5);
+      this.tweens.add({ targets: t.obj, y: up ? 200 : 900, angle: up ? -90 : 90, alpha: 0.2, duration: 900, ease: 'Sine.in', onComplete: () => t.obj.destroy() });
+    }
   }
 
   /** Full-screen moments end the run: put the phone away first so it never hides behind them. */
@@ -879,6 +989,7 @@ export class Drive extends Phaser.Scene {
 
   private arrive() {
     this.endRun();
+    this.tweens.add({ targets: this.car, x: this.car.x + 380, duration: 1300, ease: 'Sine.out' });
     sfx.screech();
     this.driver.setFace('wide', 'smile');
     bus.emit('hud:cutin', { text: pick(['I MADE IT! I FUCKING MADE IT!', 'HOME! HOME! THE BANANAS LIVE!', "WHO'S THE MAN?! I'M THE MAN!"]), eyes: 'wide', mouth: 'open', ms: 1300, stage: this.stage });

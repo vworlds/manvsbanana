@@ -215,16 +215,19 @@ describe('fair traffic', () => {
     expect(crowdSize(6, () => 0.9)).toBeGreaterThan(crowdSize(1, () => 0.9));
   });
 
-  it('the light is red at normal speed, but turbo or braking both get a non-red light', () => {
-    const T = 3;
+  it('the light is red if you just keep going; braking always beats it, a quick turbo does too', () => {
+    const T = 3; // seconds to the stop line at the current speed
     const p = lightPlan(T);
-    const react = 0.25 * T; // the player reacts a quarter of the way in
     expect(lightAt(p, T)).toBe('red');
-    const turboArrive = react + (T - react) / 1.7;
-    expect(lightAt(p, turboArrive)).not.toBe('red');
-    // braking: distance covered by the time the light is green again is less than the full way
-    const covered = react + (p.greenAt - react) * BRAKE_SPEED;
-    expect(covered).toBeLessThan(T);
+    // turbo from normal speed, reacting within the first ~12% of the approach
+    const react = 0.12 * T;
+    expect(lightAt(p, react + (T - react) / 1.7)).not.toBe('red');
+    // braking, even from full turbo (brake speed is 0.5/1.7 of the current speed), reacting at 25%
+    for (const current of [1, 1.7]) {
+      const r = 0.25 * T;
+      const covered = r + (p.greenAt - r) * (BRAKE_SPEED / current);
+      expect(covered).toBeLessThan(T); // still before the line when it turns green
+    }
   });
 });
 

@@ -116,6 +116,9 @@ export const sfx = {
     tone(990, 0.12, 'square', 0.18, undefined, 0.08);
     tone(1320, 0.16, 'square', 0.15, undefined, 0.16);
   },
+  alarm: () => {
+    for (let i = 0; i < 6; i++) tone(i % 2 ? 1300 : 900, 0.18, 'square', 0.08, undefined, i * 0.2);
+  },
   siren: () => {
     tone(960, 0.4, 'triangle', 0.07, 760);
     tone(760, 0.4, 'triangle', 0.07, 960, 0.45);

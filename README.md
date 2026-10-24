@@ -29,4 +29,5 @@ and roadworks (traffic keeps one lane free for you). The rules that guarantee th
 `src/logic/traffic.ts` and covered by `npm test`.
 
 **Debug URLs:** `?scene=drive|home|plead|finale|store`, `?fastripe=8` (bananas rot 8x faster), `?trip=4` (start on a later trip),
-`?events=crossroad,works,crosswalk` (force the first road events).
+`?events=crossroad,works,crosswalk` (force the first road events), `?park=trash|lady|kid|tree|parked`
+(force the crash-park ending).

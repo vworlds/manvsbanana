@@ -102,12 +102,14 @@ export interface LightPlan {
 }
 
 /**
- * A light that is red exactly when you would arrive at normal speed, so you
- * must either turbo through on green/yellow or brake and arrive after it turns
- * green again. `T` = seconds to reach the stop line at normal speed.
+ * A light that is red when you would arrive if you just keep going at your
+ * current speed. So you have to react: brake and arrive after it turns green
+ * again (always possible, no turbo needed), or, if you're not already on
+ * turbo, floor it straight away and make it through on yellow.
+ * `T` = seconds to reach the stop line at your current speed.
  */
 export function lightPlan(T: number): LightPlan {
-  return { yellowAt: 0.66 * T, redAt: 0.84 * T, greenAt: 1.5 * T };
+  return { yellowAt: 0.5 * T, redAt: 0.69 * T, greenAt: 1.6 * T };
 }
 
 export function lightAt(p: LightPlan, t: number): Light {

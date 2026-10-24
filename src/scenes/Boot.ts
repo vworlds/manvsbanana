@@ -14,7 +14,8 @@ const PLAIN = [
   'banana_green', 'banana_yellow', 'banana_spotty', 'banana_brown',
   'bag', 'ice', 'chant', 'yield', 'light', 'trash', 'fly', 'phone', 'keys', 'splat', 'clock',
   'wheel', 'nitro', 'puff', 'house', 'car_police', 'signal', 'cone', 'barrier', 'stopline',
-  'burst_yellow', 'burst_blue', 'skyline', 'trees', 'street', 'room', 'table', 'store',
+  'burst_yellow', 'burst_blue', 'skyline', 'trees', 'street', 'room', 'table',
+  'car_parked', 'tree', 'old_lady', 'bike', 'kid_rider', 'pillar', 'hedge',
 ];
 
 export class Boot extends Phaser.Scene {

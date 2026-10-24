@@ -34,6 +34,8 @@ export const state = {
   trip: 1,
   /** Bananas successfully delivered (and eaten with contempt) this generation. */
   deliveries: 0,
+  /** Stores visited this game; the first one is the store from the short. */
+  storeVisits: 0,
   /** Every father so far in this dynasty (this session). */
   dynasty: [] as Father[],
   best: saved.best,
@@ -42,6 +44,7 @@ export const state = {
   newDynasty() {
     this.generation = 1;
     this.dynasty = [];
+    this.storeVisits = 0;
     this.newFather();
   },
 
@@ -93,6 +96,8 @@ export const debug = (() => {
   return {
     fastRipe: p.has('fastripe') ? Number(p.get('fastripe')) || 8 : 1,
     scene: p.get('scene'),
+    /** Force the crash-park outcome: trash, lady, kid, tree, parked. */
+    park: p.get('park'),
     /** Start at this trip number (testing difficulty). */
     trip: Number(p.get('trip')) || 0,
     /** Force the first road events, e.g. ?events=crossroad,works */

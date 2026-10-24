@@ -232,6 +232,43 @@ save('barrier', svg(150, 130, `<rect x="16" y="60" width="8" height="66" fill="#
   <text x="75" y="48" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="9" fill="#141414">WORK</text>`));
 save('stopline', svg(24, 280, `<rect x="2" y="0" width="20" height="280" fill="#fff" opacity="0.95"/>`));
 
+// Parked car: white body, no driver; tinted to any colour in-game.
+save('car_parked', npcCar('#FFFFFF', ''));
+
+// Big leafy street tree (crash-park scene).
+save('tree', svg(320, 440, `<path d="M146 440 L150 250 Q152 230 140 214 M170 440 L168 250 Q170 228 186 212" stroke="${INK}" stroke-width="6" fill="none"/>
+  <path d="M138 440 L146 250 L174 250 L182 440 Z" fill="#7A4A26" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M160 18 C220 10 262 52 258 98 C300 110 312 168 284 200 C300 246 262 290 214 280 C196 312 128 316 106 282 C58 296 18 258 34 214 C4 186 14 130 56 118 C52 64 104 26 160 18 Z" fill="#3E9B4A" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M110 90 Q140 70 170 84 M200 140 Q228 128 246 146 M80 190 Q104 176 132 188 M170 220 Q196 206 222 222" stroke="#2C7A37" stroke-width="6" fill="none" stroke-linecap="round"/>`));
+
+// Old lady with a cane (crash-park scene).
+save('old_lady', svg(120, 200, `<path d="M48 130 L42 196 M70 130 L76 196" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+  <path d="M86 92 L104 196" stroke="#7A4A26" stroke-width="6" stroke-linecap="round"/>
+  <path d="M40 84 L30 128 M78 84 L88 100" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+  <path d="M38 78 L82 78 L90 140 L30 140 Z" fill="#E88AB4" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="60" cy="46" r="34" fill="#F2CDA8" stroke="${INK}" stroke-width="5"/>
+  <circle cx="60" cy="14" r="14" fill="#D9D9E0" stroke="${INK}" stroke-width="4"/>
+  <path d="M28 40 Q32 16 60 14 Q88 16 92 40" fill="#D9D9E0" stroke="${INK}" stroke-width="4"/>
+  <circle cx="50" cy="48" r="8" fill="none" stroke="#E04BA0" stroke-width="3"/><circle cx="70" cy="48" r="8" fill="none" stroke="#E04BA0" stroke-width="3"/>
+  <circle cx="50" cy="48" r="3" fill="${INK}"/><circle cx="70" cy="48" r="3" fill="${INK}"/><path d="M52 64 L68 64" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`));
+
+// Kid on a bike: rider and bike are separate so they can fly apart.
+save('bike', svg(180, 110, `<circle cx="38" cy="72" r="30" fill="none" stroke="${INK}" stroke-width="6"/><circle cx="142" cy="72" r="30" fill="none" stroke="${INK}" stroke-width="6"/>
+  <path d="M38 72 L76 30 L124 30 L142 72 M76 30 L92 72 L124 30 M38 72 L92 72 M118 18 L128 18 M124 30 L120 16" stroke="#D3202A" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 26 L86 26" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`));
+save('kid_rider', svg(110, 160, `<path d="M46 108 L34 150 M60 108 L78 140" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+  <path d="M40 76 L62 70 L66 112 L40 112 Z" fill="#2EAA3A" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M60 80 L92 96" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="54" cy="40" r="32" fill="${SKIN}" stroke="${INK}" stroke-width="5"/>
+  <path d="M22 36 Q24 4 56 6 Q86 8 86 34 Z" fill="#E33" stroke="${INK}" stroke-width="4"/><path d="M84 30 L102 32" stroke="${INK}" stroke-width="5"/>
+  <circle cx="64" cy="44" r="4" fill="${INK}"/><circle cx="80" cy="44" r="4" fill="${INK}"/><path d="M66 58 Q74 62 82 58" stroke="${INK}" stroke-width="3" fill="none"/>`));
+
+// Neighbourhood entrance pillar.
+save('pillar', svg(70, 200, `<rect x="10" y="30" width="50" height="170" fill="#B5553C" stroke="${INK}" stroke-width="5"/>
+  <path d="M10 70 H60 M10 110 H60 M10 150 H60 M35 30 V70 M22 70 V110 M48 110 V150 M35 150 V200" stroke="#7E3524" stroke-width="3"/>
+  <rect x="4" y="16" width="62" height="18" fill="#D8CBB8" stroke="${INK}" stroke-width="5"/><circle cx="35" cy="8" r="9" fill="#FFE97A" stroke="${INK}" stroke-width="4"/>`));
+save('hedge', svg(200, 70, `<path d="M6 66 Q0 30 26 26 Q30 4 60 10 Q80 -2 104 12 Q130 0 150 16 Q186 10 192 38 Q204 54 194 66 Z" fill="#3E9B4A" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>`));
+
 // Turbo refill pickup: an energy drink can.
 save('nitro', svg(80, 120, `<rect x="10" y="12" width="60" height="100" rx="10" fill="#1F8FD6" stroke="${INK}" stroke-width="6"/>
   <rect x="16" y="4" width="48" height="14" rx="5" fill="#C9CCD6" stroke="${INK}" stroke-width="5"/>
@@ -406,14 +443,6 @@ save('table', svg(1280, 260, `<path d="M20 60 Q640 -20 1260 60 L1240 150 Q640 21
   <path d="M40 150 L40 260 M1240 150 L1240 260" stroke="${INK}" stroke-width="10"/>
   <path d="M200 80 Q640 40 1080 80" stroke="#fff" stroke-width="4" opacity="0.3" fill="none"/>`));
 
-save('store', svg(1280, 720, `<rect width="1280" height="720" fill="#9FD5F2"/>
-  <rect x="140" y="160" width="1000" height="380" fill="#E8E2D2" stroke="${INK}" stroke-width="7"/>
-  <rect x="120" y="110" width="1040" height="90" fill="#D3202A" stroke="${INK}" stroke-width="7"/>
-  <rect x="200" y="260" width="300" height="200" fill="#BFE6FF" stroke="${INK}" stroke-width="6"/>
-  <rect x="780" y="260" width="300" height="200" fill="#BFE6FF" stroke="${INK}" stroke-width="6"/>
-  <rect x="560" y="300" width="160" height="240" fill="#7FB0D0" stroke="${INK}" stroke-width="6"/><path d="M640 300 L640 540" stroke="${INK}" stroke-width="5"/>
-  <text x="350" y="380" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="40" fill="#E33">SALE!</text>
-  <rect y="540" width="1280" height="180" fill="#8E8E96"/><path d="M0 540 L1280 540" stroke="${INK}" stroke-width="6"/>
-  <path d="M100 630 h120 M320 630 h120 M540 630 h120 M760 630 h120 M980 630 h120" stroke="#fff" stroke-width="8"/>`));
+
 
 console.log('art written to', OUT);

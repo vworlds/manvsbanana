@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { makeCar } from '../art/car';
 import { sfx } from '../audio/sfx';
 import { caption } from '../fx/Bubble';
-import { SHOUT, TALK } from '../fonts';
+import { TALK } from '../fonts';
+import { drawStore, randomStore, videoStore } from '../art/store';
 import { homeDistance } from '../logic/trip';
 import { loadRecent, pickFresh, rememberLines } from '../logic/plead';
 import { STORE_NAMES } from '../logic/texts';
@@ -52,27 +53,28 @@ export class Store extends Phaser.Scene {
   }
 
   private async run() {
-    this.add.image(640, 360, 'store');
-    // a different shop every time
-    const recent = loadRecent();
-    const name = pickFresh(STORE_NAMES, Math.random, recent);
-    rememberLines([name]);
-    const sign = this.add
-      .text(640, 156, name, { fontFamily: SHOUT, fontSize: '72px', color: '#ffffff', stroke: '#141414', strokeThickness: 8 })
-      .setOrigin(0.5);
-    if (sign.width > 1000) sign.setScale(1000 / sign.width);
+    // The game's first store is the one from the short; after that, a different shop every time.
+    let style;
+    if (state.storeVisits === 0) style = videoStore();
+    else {
+      const name = pickFresh(STORE_NAMES, Math.random, loadRecent());
+      rememberLines([name]);
+      style = randomStore(name);
+    }
+    state.storeVisits += 1;
+    drawStore(this, style);
     const car = makeCar(this, -300, 690, 'brown', 0.8);
     car.driver.setFace('angry', 'grit');
     sfx.screech();
     await tweenP(this, { targets: car.root, x: 420, duration: 380, ease: 'Quad.out' });
     if (!this.alive) return;
-    this.add.rectangle(640, 300, 1280, 190, 0x000000, 0.55);
+    this.add.rectangle(640, 85, 1280, 170, 0x000000, 0.6);
     const title = this.mode === 'new' ? (state.generation > 1 ? 'YOUR TURN, DAD' : 'BANANA RUN') : 'BACK TO THE STORE';
-    const t = caption(this, 640, 270, title, 96, '#F7D93A');
+    const t = caption(this, 640, 62, title, 88, '#F7D93A');
     t.setScale(2);
     this.tweens.add({ targets: t, scale: 1, duration: 200, ease: 'Back.out' });
     this.add
-      .text(640, 350, this.subtitle(), { fontFamily: TALK, fontStyle: '900', fontSize: '26px', color: '#fff', stroke: '#141414', strokeThickness: 6 })
+      .text(640, 135, this.subtitle(), { fontFamily: TALK, fontStyle: '900', fontSize: '26px', color: '#fff', stroke: '#141414', strokeThickness: 6 })
       .setOrigin(0.5);
     await wait(this, this.mode === 'new' ? 1300 : 700);
     if (!this.alive) return;
