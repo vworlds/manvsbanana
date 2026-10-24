@@ -229,6 +229,6 @@ export class Finale extends Phaser.Scene {
     if (!this.alive) return;
     sfx.select();
     if (k === 'ESC') this.scene.start('Title');
-    else this.scene.start('Drive');
+    else this.scene.start('Store', { mode: 'new' });
   }
 }

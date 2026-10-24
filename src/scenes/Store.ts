@@ -9,16 +9,19 @@ import { STORE_NAMES } from '../logic/texts';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP, wait } from './common';
 
-/** Redemption: a quick cut to the store for fresh green bananas, then back on the road. */
+/**
+ * A quick cut to the store for fresh green bananas, then onto the road.
+ * Shown at the start of every father's first trip, after each delivery, and after a redemption.
+ */
 export class Store extends Phaser.Scene {
   private alive = true;
-  private mode: 'redeemed' | 'delivery' = 'redeemed';
+  private mode: 'new' | 'redeemed' | 'delivery' = 'redeemed';
 
   constructor() {
     super('Store');
   }
 
-  init(data: { mode?: 'redeemed' | 'delivery' }) {
+  init(data: { mode?: 'new' | 'redeemed' | 'delivery' }) {
     this.mode = data.mode ?? 'redeemed';
   }
 
@@ -38,6 +41,16 @@ export class Store extends Phaser.Scene {
     this.scene.start('Drive', { mode: this.mode });
   }
 
+  private subtitle() {
+    const dist = `${homeDistance(state.trip).toLocaleString()} m`;
+    if (this.mode === 'new')
+      return state.generation > 1
+        ? `Generation ${state.generation}. Home is ${dist} away. You'll do better than him. Surely.`
+        : `Home is ${dist} away. Get them there before they turn brown.`;
+    if (this.mode === 'delivery') return `Trip ${state.trip}: ${dist}. They want more. They always want more.`;
+    return `Redemption #${state.redemptions}. They won't be this nice again.`;
+  }
+
   private async run() {
     this.add.image(640, 360, 'store');
     // a different shop every time
@@ -54,13 +67,14 @@ export class Store extends Phaser.Scene {
     await tweenP(this, { targets: car.root, x: 420, duration: 380, ease: 'Quad.out' });
     if (!this.alive) return;
     this.add.rectangle(640, 300, 1280, 190, 0x000000, 0.55);
-    const t = caption(this, 640, 270, 'BACK TO THE STORE', 96, '#F7D93A');
+    const title = this.mode === 'new' ? (state.generation > 1 ? 'YOUR TURN, DAD' : 'BANANA RUN') : 'BACK TO THE STORE';
+    const t = caption(this, 640, 270, title, 96, '#F7D93A');
     t.setScale(2);
     this.tweens.add({ targets: t, scale: 1, duration: 200, ease: 'Back.out' });
     this.add
-      .text(640, 350, this.mode === 'delivery' ? `Trip ${state.trip}: ${homeDistance(state.trip).toLocaleString()} m. They want more. They always want more.` : `Redemption #${state.redemptions}. They won't be this nice again.`, { fontFamily: TALK, fontStyle: '900', fontSize: '26px', color: '#fff', stroke: '#141414', strokeThickness: 6 })
+      .text(640, 350, this.subtitle(), { fontFamily: TALK, fontStyle: '900', fontSize: '26px', color: '#fff', stroke: '#141414', strokeThickness: 6 })
       .setOrigin(0.5);
-    await wait(this, 700);
+    await wait(this, this.mode === 'new' ? 1300 : 700);
     if (!this.alive) return;
     // fresh bunch
     sfx.pickup();

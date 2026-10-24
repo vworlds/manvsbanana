@@ -30,11 +30,11 @@ export class Title extends Phaser.Scene {
     this.add.text(76, 240, 'An endless banana emergency', { fontFamily: TALK, fontStyle: '900', fontSize: '28px', color: '#F7D93A' });
 
     const lines = [
-      '↑ ↓  or  swipe  —  change lane',
-      'SPACE / →  or  hold right edge  —  TURBO (runs out; grab the blue cans)',
-      '←  or  hold left edge  —  BRAKE (refills turbo a little)',
-      'ENTER  or  tap phone  —  text your wife back',
-      'Get home before they turn brown. They\'ll want more. They always want more.',
+      '↑ ↓  or swipe  —  change lane',
+      'SPACE / →  or right edge  —  TURBO (it runs out)',
+      '←  or left edge  —  BRAKE (refills turbo a bit)',
+      'ENTER  or tap the phone  —  text your wife back',
+      'Get home before they go brown. They will want more.',
     ];
     this.add.text(78, 300, lines.join('\n'), { fontFamily: TALK, fontStyle: '700', fontSize: '21px', color: '#ddd', lineSpacing: 9 });
 
@@ -52,7 +52,7 @@ export class Title extends Phaser.Scene {
       sfx.select();
       state.newDynasty();
       this.cameras.main.flash(120, 255, 255, 255);
-      this.time.delayedCall(120, () => this.scene.start('Drive'));
+      this.time.delayedCall(120, () => this.scene.start('Store', { mode: 'new' }));
     };
     this.input.keyboard?.once('keydown-SPACE', go);
     this.input.keyboard?.once('keydown-ENTER', go);
