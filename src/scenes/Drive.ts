@@ -244,14 +244,17 @@ export class Drive extends Phaser.Scene {
   // ------------------------------------------------------------- building
   private buildBackground() {
     const sky = this.add.graphics().setDepth(0);
-    sky.fillGradientStyle(0x7ec8f0, 0x7ec8f0, 0xd6eefa, 0xd6eefa, 1).fillRect(0, 0, W, 340);
-    this.bg.skyline = this.add.tileSprite(0, 70, W, 260, 'skyline').setOrigin(0).setDepth(1);
-    this.bg.trees = this.add.tileSprite(0, 140, W, 200, 'trees').setOrigin(0).setDepth(2);
-    this.add.rectangle(0, 330, W, 55, 0xc9c9cf).setOrigin(0).setDepth(3);
+    sky.fillGradientStyle(0x6fb8ec, 0x6fb8ec, 0xcfe9fb, 0xcfe9fb, 1).fillRect(0, 0, W, 340);
+    this.bg.clouds = this.add.tileSprite(0, 10, W, 160, 'clouds').setOrigin(0).setDepth(0);
+    this.bg.skyline = this.add.tileSprite(0, 40, W, 260, 'skyline').setOrigin(0).setDepth(1);
+    // the short's city blocks: colourful facades behind the sidewalk, street trees in front
+    this.bg.buildings = this.add.tileSprite(0, 35, W, 300, 'buildings').setOrigin(0).setDepth(2);
+    this.add.rectangle(0, 330, W, 55, 0xcfcbc4).setOrigin(0).setDepth(3);
     this.bg.walkTop = this.add.tileSprite(0, 335, W, 50, 'sidewalk').setOrigin(0).setDepth(3);
-    this.add.rectangle(0, ROAD_TOP, W, ROAD_BOT - ROAD_TOP, 0x8e8e96).setOrigin(0).setDepth(4);
-    this.add.rectangle(0, ROAD_TOP - 4, W, 8, 0x5e5e66).setOrigin(0).setDepth(4);
-    this.add.rectangle(0, ROAD_BOT - 4, W, 8, 0x5e5e66).setOrigin(0).setDepth(4);
+    this.bg.street = this.add.tileSprite(0, 180, W, 205, 'streetfront').setOrigin(0).setDepth(7);
+    this.add.rectangle(0, ROAD_TOP, W, ROAD_BOT - ROAD_TOP, 0x86868f).setOrigin(0).setDepth(4);
+    this.add.rectangle(0, ROAD_TOP - 4, W, 9, 0x6b6872).setOrigin(0).setDepth(4);
+    this.add.rectangle(0, ROAD_BOT - 4, W, 9, 0x6b6872).setOrigin(0).setDepth(4);
     this.bg.dash1 = this.add.tileSprite(0, (LANE_Y[0] + LANE_Y[1]) / 2 + 22, W, 8, 'dash').setOrigin(0).setDepth(5);
     this.bg.dash2 = this.add.tileSprite(0, (LANE_Y[1] + LANE_Y[2]) / 2 + 22, W, 8, 'dash').setOrigin(0).setDepth(5);
     this.bg.walkBot = this.add.tileSprite(0, ROAD_BOT + 4, W, 60, 'sidewalk').setOrigin(0).setDepth(4);
@@ -350,7 +353,7 @@ export class Drive extends Phaser.Scene {
 
   private spawnCrosswalk(crossroad: boolean) {
     const x = W + (crossroad ? 320 : 200);
-    const c = this.add.container(x, 0).setDepth(6);
+    const c = this.add.container(x, 0).setDepth(8);
     const walkX = crossroad ? 70 : 0;
     const anchor: Thing = { kind: crossroad ? 'light' : 'decor', obj: c, lane: -1, own: 0, vy: 0, hit: false };
     if (crossroad) {
@@ -386,7 +389,7 @@ export class Drive extends Phaser.Scene {
       const down = Math.random() < 0.5;
       const y = GROUND(l) + (down ? -50 : 50);
       const px = x + walkX - 40 + (i % 3) * 30;
-      const p = this.add.image(px, y, `ped_${Phaser.Math.Between(0, 5)}`).setOrigin(0.5, 1).setScale(0.55);
+      const p = this.add.image(px, y, `ped_${Phaser.Math.Between(0, 7)}`).setOrigin(0.5, 1).setScale(0.55);
       if (!down) p.setFlipX(true);
       this.things.push({ kind: 'ped', obj: p, lane: -1, own: 0, vy: (down ? 1 : -1) * (90 + Math.random() * 40), hit: false });
       this.tweens.add({ targets: p, angle: { from: -4, to: 4 }, duration: 220, yoyo: true, repeat: -1 });
@@ -400,7 +403,7 @@ export class Drive extends Phaser.Scene {
     const c = this.add.container(W + 220, 0);
     const y = GROUND(lane);
     for (let cx = 70; cx < len; cx += 85) c.add(this.add.image(cx, y - 6, 'cone').setOrigin(0.5, 1).setScale(0.8));
-    c.add(this.add.image(len * 0.5, y - 10, `ped_${Phaser.Math.Between(0, 5)}`).setOrigin(0.5, 1).setScale(0.5));
+    c.add(this.add.image(len * 0.5, y - 10, `ped_${Phaser.Math.Between(0, 7)}`).setOrigin(0.5, 1).setScale(0.5));
     c.add(this.add.image(20, y, 'barrier').setOrigin(0.5, 1).setScale(0.75));
     c.add(this.add.image(len, y, 'barrier').setOrigin(0.5, 1).setScale(0.6));
     const thing: Thing = { kind: 'works', obj: c, lane, own: 0, vy: 0, hit: false, len };
@@ -603,8 +606,10 @@ export class Drive extends Phaser.Scene {
 
     // background
     const px = this.speed * dt;
+    this.bg.clouds.tilePositionX += px * 0.02;
     this.bg.skyline.tilePositionX += px * 0.05;
-    this.bg.trees.tilePositionX += px * 0.25;
+    this.bg.buildings.tilePositionX += px * 0.6;
+    this.bg.street.tilePositionX += px;
     this.bg.walkTop.tilePositionX += px;
     this.bg.walkBot.tilePositionX += px;
     this.bg.dash1.tilePositionX += px;
@@ -863,7 +868,7 @@ export class Drive extends Phaser.Scene {
    */
   private spawnJunction(left: number) {
     const x = CAR_X + CAR_HALF + left * PX_PER_M;
-    const c = this.add.container(x, 0).setDepth(6);
+    const c = this.add.container(x, 0).setDepth(8);
     const g = this.add.graphics();
     c.add(g);
     const midTop = (LANE_Y[0] + LANE_Y[1]) / 2 + 26; // dash line between lanes 0 and 1

@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 export type Eyes = 'neutral' | 'worried' | 'angry' | 'wide' | 'crying' | 'smug' | 'shut' | 'disdain';
 export type Mouth = 'flat' | 'frown' | 'smile' | 'smirk' | 'open' | 'grit' | 'o' | 'wail' | 'chew';
 export type Kind = 'man' | 'kid' | 'wife';
-export type Pose = 'down' | 'up' | 'hips' | 'reach' | 'face' | 'wheel' | 'hold';
+export type Pose = 'down' | 'up' | 'hips' | 'reach' | 'face' | 'wheel' | 'hold' | 'drive';
 
 /** Face textures are loaded at this multiple of their 200px design size. */
 export const FACE_RES = 3;
@@ -101,6 +101,9 @@ export class Person extends Phaser.GameObjects.Container {
       g.moveTo(side * sx, sh);
       for (const [x, y] of pts) g.lineTo(side * x * s, y * s);
       g.strokePath();
+      // round black hand, like the short
+      const [hx, hy] = pts[pts.length - 1];
+      g.fillStyle(0x141414, 1).fillCircle(side * hx * s, hy * s, 8.5 * s);
     };
     for (const side of [-1, 1]) {
       switch (this.pose) {
@@ -121,6 +124,10 @@ export class Person extends Phaser.GameObjects.Container {
           break;
         case 'wheel':
           arm(side, [[60, 150], [side > 0 ? 110 : 70, 150]]);
+          break;
+        case 'drive':
+          // elbows out, hands up on the steering wheel (the in-car close-up)
+          arm(side, [[100, 132], [74, 110]]);
           break;
         case 'hold':
           arm(side, [[62, 160], [30, 170]]);

@@ -1,1 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" ><circle cx="100" cy="100" r="90" fill="#F7C796"/><circle cx="100" cy="100" r="90" fill="none" stroke="#141414" stroke-width="7"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" ><defs><clipPath id="hs"><circle cx="100" cy="100" r="90"/></clipPath></defs>
+  <circle cx="100" cy="100" r="90" fill="#EDAF80"/><circle cx="100" cy="86" r="88" fill="#F9C99A" clip-path="url(#hs)"/><circle cx="100" cy="100" r="90" fill="none" stroke="#141414" stroke-width="7"/></svg>

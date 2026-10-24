@@ -25,7 +25,8 @@ export interface StoreStyle {
   awning: [number, number];
 }
 
-const INK = 0x141414;
+/** Background linework: thinner and dark brown/navy, like the short (characters keep the thick black). */
+const INK = 0x3a2e3a;
 const GROUND = 540;
 
 /** The store from the video. */
@@ -94,7 +95,7 @@ export function drawStore(scene: Phaser.Scene, s: StoreStyle, parkedCars = 5): P
   const top = GROUND - s.height;
 
   // roof shapes behind/above the facade
-  g.lineStyle(6, INK);
+  g.lineStyle(3.5, INK);
   if (s.roof === 'gable') {
     g.fillStyle(s.roofColor).fillTriangle(x0 - 30, top + 4, W / 2, top - s.height * 0.45, x0 + s.width + 30, top + 4);
     g.strokeTriangle(x0 - 30, top + 4, W / 2, top - s.height * 0.45, x0 + s.width + 30, top + 4);
@@ -107,6 +108,8 @@ export function drawStore(scene: Phaser.Scene, s: StoreStyle, parkedCars = 5): P
   }
   // facade
   g.fillStyle(s.body).fillRect(x0, top, s.width, s.height).strokeRect(x0, top, s.width, s.height);
+  // soft cel-shadow across part of the wall
+  g.fillStyle(0x000000, 0.08).fillTriangle(x0, top, x0 + s.width * 0.4, top, x0, top + s.height * 0.8);
   if (s.roof === 'flat' || s.roof === 'awning' || s.roof === 'arch') {
     g.fillStyle(s.roof === 'flat' ? s.roofColor : s.trim).fillRect(x0 - 16, top - 18, s.width + 32, 22).strokeRect(x0 - 16, top - 18, s.width + 32, 22);
   }
@@ -117,7 +120,7 @@ export function drawStore(scene: Phaser.Scene, s: StoreStyle, parkedCars = 5): P
   g.fillStyle(0x9fd8f7).fillRect(x0 + 24, winTop, s.width - 48, 110).strokeRect(x0 + 24, winTop, s.width - 48, 110);
   g.lineStyle(4, s.trim);
   for (let x = x0 + 24 + 90; x < x0 + s.width - 30; x += 90) g.lineBetween(x, winTop + 3, x, winTop + 107);
-  g.lineStyle(6, INK);
+  g.lineStyle(3.5, INK);
   g.fillStyle(0x6fb0d6).fillRect(doorX, winTop - 10, doorW, 130).strokeRect(doorX, winTop - 10, doorW, 130);
   g.lineBetween(doorX + doorW / 2, winTop - 10, doorX + doorW / 2, GROUND);
   g.lineStyle(5, 0xffffff, 0.6);
@@ -132,7 +135,7 @@ export function drawStore(scene: Phaser.Scene, s: StoreStyle, parkedCars = 5): P
       g.fillStyle(s.awning[i % 2]).fillRect(ax + i * (aw / n), ay, aw / n, 34);
       g.fillStyle(s.awning[i % 2]).fillCircle(ax + i * (aw / n) + aw / n / 2, ay + 34, aw / n / 2);
     }
-    g.lineStyle(5, INK).strokeRect(ax, ay, aw, 34);
+    g.lineStyle(3, INK).strokeRect(ax, ay, aw, 34);
   }
 
   // the sign
@@ -141,20 +144,20 @@ export function drawStore(scene: Phaser.Scene, s: StoreStyle, parkedCars = 5): P
   if (s.sign === 'panel') {
     const pw = Math.min(s.width * 0.34, 340);
     const ph = 100;
-    g.lineStyle(6, INK).fillStyle(s.signBg).fillRect(W / 2 - pw / 2, signY - ph / 2, pw, ph).strokeRect(W / 2 - pw / 2, signY - ph / 2, pw, ph);
+    g.lineStyle(3.5, INK).fillStyle(s.signBg).fillRect(W / 2 - pw / 2, signY - ph / 2, pw, ph).strokeRect(W / 2 - pw / 2, signY - ph / 2, pw, ph);
     g.lineStyle(4, 0x8e1b1b).strokeRect(W / 2 - pw / 2 + 8, signY - ph / 2 + 8, pw - 16, ph - 16);
     maxW = pw - 30;
   } else if (s.sign === 'band') {
-    g.lineStyle(6, INK).fillStyle(s.signBg).fillRect(x0 + 10, signY - 40, s.width - 20, 80).strokeRect(x0 + 10, signY - 40, s.width - 20, 80);
+    g.lineStyle(3.5, INK).fillStyle(s.signBg).fillRect(x0 + 10, signY - 40, s.width - 20, 80).strokeRect(x0 + 10, signY - 40, s.width - 20, 80);
     maxW = s.width - 60;
   } else if (s.sign === 'round') {
-    g.lineStyle(6, INK).fillStyle(s.signBg).fillCircle(W / 2, signY, 70).strokeCircle(W / 2, signY, 70);
+    g.lineStyle(3.5, INK).fillStyle(s.signBg).fillCircle(W / 2, signY, 70).strokeCircle(W / 2, signY, 70);
     maxW = 120;
   }
   const rooftop = s.sign === 'rooftop';
   const ty = rooftop ? (s.roof === 'gable' ? top - s.height * 0.45 - 40 : top - 70) : signY;
   if (rooftop) {
-    g.lineStyle(5, INK);
+    g.lineStyle(3, INK);
     for (const dx of [-0.3, 0, 0.3]) g.lineBetween(W / 2 + dx * s.width * 0.5, ty + 20, W / 2 + dx * s.width * 0.5, ty + 70);
   }
   const words = s.sign === 'panel' || s.sign === 'round' ? s.name.replace(' ', '\n') : s.name;

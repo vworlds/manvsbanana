@@ -10,12 +10,12 @@ const FACES = [
 const BODIES = ['body_man', 'body_kid', 'body_wife', 'baby_calm', 'baby_scream'];
 const PLAIN = [
   'car_front', 'car_back', 'car_glass', 'car_green', 'car_red', 'car_taxi', 'car_white',
-  'ped_0', 'ped_1', 'ped_2', 'ped_3', 'ped_4', 'ped_5',
+  'ped_0', 'ped_1', 'ped_2', 'ped_3', 'ped_4', 'ped_5', 'ped_6', 'ped_7',
   'banana_green', 'banana_yellow', 'banana_spotty', 'banana_brown',
   'bag', 'ice', 'chant', 'yield', 'light', 'trash', 'fly', 'phone', 'keys', 'splat', 'clock',
   'wheel', 'nitro', 'coffee', 'puff', 'house', 'car_police', 'signal', 'cone', 'barrier', 'stopline',
   'burst_yellow', 'burst_blue', 'skyline', 'trees', 'street', 'room', 'table',
-  'car_parked', 'tree', 'old_lady', 'bike', 'kid_rider', 'pillar', 'hedge',
+  'cabin_back', 'cabin_dash', 'car_seat', 'steering', 'bag_full', 'car_parked', 'buildings', 'streetfront', 'clouds', 'tree', 'old_lady', 'bike', 'kid_rider', 'pillar', 'hedge',
 ];
 
 export class Boot extends Phaser.Scene {
@@ -39,7 +39,11 @@ export class Boot extends Phaser.Scene {
     // lane dash
     g.fillStyle(0xffffff, 0.9).fillRect(0, 0, 70, 8).generateTexture('dash', 140, 8).clear();
     // sidewalk seams
-    g.fillStyle(0xc9c9cf).fillRect(0, 0, 120, 50).lineStyle(3, 0x9d9da6).lineBetween(118, 0, 118, 50).generateTexture('sidewalk', 120, 50).clear();
+    // sidewalk slabs with a kerb, like the short
+    g.fillStyle(0xcfcbc4).fillRect(0, 0, 120, 50);
+    g.lineStyle(2, 0xa9a49c).lineBetween(118, 0, 118, 40).lineBetween(0, 20, 120, 20);
+    g.fillStyle(0xa9a59e).fillRect(0, 40, 120, 10).fillStyle(0xe4e0d9).fillRect(0, 40, 120, 2);
+    g.generateTexture('sidewalk', 120, 50).clear();
     // crosswalk stripes
     g.fillStyle(0xffffff, 0.95);
     for (let y = 0; y < 270; y += 30) g.fillRect(0, y, 110, 18);

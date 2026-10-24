@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { Person, type Eyes, type Mouth } from '../art/Person';
+import type { Eyes, Mouth, Person } from '../art/Person';
+import { DAD_X, DAD_Y, makeCabin } from '../art/cabin';
 import { sfx } from '../audio/sfx';
 import { bus } from '../bus';
 import { SHOUT, TALK } from '../fonts';
@@ -29,6 +30,7 @@ export class Hud extends Phaser.Scene {
   private turboLabel!: Phaser.GameObjects.Text;
   private homeIcon!: Phaser.GameObjects.Text;
   private face!: Person;
+  private insetBananas?: Phaser.GameObjects.Image;
   private faceBubble?: Phaser.GameObjects.Container;
   private phone?: Phaser.GameObjects.Container;
   private phoneTimer?: Phaser.Time.TimerEvent;
@@ -57,13 +59,16 @@ export class Hud extends Phaser.Scene {
     // ---- face inset (top-right), like the in-car close-ups
     const fx = W - 140;
     const fy = 110;
-    const burst = this.add.image(fx, fy, 'burst_yellow').setScale(0.3);
-    this.tweens.add({ targets: burst, angle: 360, duration: 20000, repeat: -1 });
+    // a small in-car shot: the dad at the wheel, framed by the windscreen pillar
+    const cab = makeCabin(this, 'green');
+    const cs = 0.3;
+    cab.root.setScale(cs).setPosition(fx - DAD_X * cs - 10, fy - DAD_Y * cs + 18);
     const m = this.make.graphics({}, false).fillRect(fx - 115, fy - 90, 230, 180);
-    burst.setMask(m.createGeometryMask());
-    this.face = new Person(this, fx, fy + 18, 'man', { body: false }).setScale(0.85).setFace('worried', 'grit');
+    cab.root.setMask(m.createGeometryMask());
+    this.face = cab.dad;
+    this.insetBananas = cab.bananas;
     this.add.graphics().lineStyle(6, 0x141414).strokeRect(fx - 115, fy - 90, 230, 180);
-    this.tweens.add({ targets: this.face, y: fy + 12, duration: 120, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: cab.root, y: cab.root.y - 4, duration: 120, yoyo: true, repeat: -1 });
 
     // ---- touch buttons: hold left edge = brake, right edge = turbo
     if (this.sys.game.device.input.touch) {
@@ -78,6 +83,7 @@ export class Hud extends Phaser.Scene {
     const onStats = (s: Parameters<Hud['stats']>[0]) => this.stats(s);
     const onStage = (st: Stage) => {
       this.bananaIcon.setTexture(`banana_${st}`);
+      this.insetBananas?.setTexture(`banana_${st}`);
       this.tweens.add({ targets: this.bananaIcon, scale: 0.7, duration: 120, yoyo: true });
     };
     const onPhone = (at?: { x?: number }) => this.openPhone(at);
@@ -143,13 +149,13 @@ export class Hud extends Phaser.Scene {
     // Container sits at screen centre so the punch-in zoom scales around the middle.
     const c = this.add.container(W / 2, H / 2).setDepth(3000);
     const flash = this.add.rectangle(0, 0, W, H, 0xffffff);
-    const burst = this.add.image(0, 0, 'burst_yellow').setScale(2);
-    this.tweens.add({ targets: burst, angle: 30, duration: s.ms + 400 });
-    const man = new Person(this, W * 0.2, H * 0.12, 'man').setScale(2.1).setFace(s.eyes, s.mouth).setPose('face');
-    man.shout(s.ms);
-    const ban = this.add.image(-W * 0.14, H * 0.32, `banana_${s.stage ?? 'green'}`).setScale(1.3).setAngle(-12);
-    const b = bubble(this, -W * 0.2, -H * 0.2, s.text, { tailX: W * 0.12, tailY: H * 0.02, width: 560, ms: 0, size: 54 });
-    c.add([burst, ban, man, flash, b]);
+    // the in-car close-up from the short: bananas on the passenger seat, dad at the wheel
+    const cab = makeCabin(this, s.stage ?? 'green', s.eyes, s.mouth);
+    cab.root.setPosition(-W / 2, -H / 2);
+    this.tweens.add({ targets: cab.burst, scale: 1.4, duration: s.ms + 400 });
+    cab.dad.shout(s.ms);
+    const b = bubble(this, -W * 0.14, -H * 0.3, s.text, { tailX: W * 0.14, tailY: -H * 0.08, width: 560, ms: 0, size: 50 });
+    c.add([cab.root, flash, b]);
     this.tweens.add({ targets: flash, alpha: 0, duration: 120 });
     c.setScale(1.15);
     this.tweens.add({ targets: c, scale: 1, duration: s.ms, ease: 'Quad.out' });
