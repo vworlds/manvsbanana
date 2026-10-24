@@ -13,7 +13,7 @@ const PLAIN = [
   'ped_0', 'ped_1', 'ped_2', 'ped_3', 'ped_4', 'ped_5',
   'banana_green', 'banana_yellow', 'banana_spotty', 'banana_brown',
   'bag', 'ice', 'chant', 'yield', 'light', 'trash', 'fly', 'phone', 'keys', 'splat', 'clock',
-  'wheel', 'nitro', 'puff', 'house',
+  'wheel', 'nitro', 'puff', 'house', 'car_police', 'signal', 'cone', 'barrier', 'stopline',
   'burst_yellow', 'burst_blue', 'skyline', 'trees', 'street', 'room', 'table', 'store',
 ];
 
@@ -47,6 +47,7 @@ export class Boot extends Phaser.Scene {
     g.fillStyle(0xffffff).fillCircle(8, 8, 8).generateTexture('dot', 16, 16).destroy();
 
     state.newDynasty();
+    if (debug.trip) state.trip = debug.trip;
     const target = debug.scene;
     if (target === 'plead') {
       state.distance = 1800;

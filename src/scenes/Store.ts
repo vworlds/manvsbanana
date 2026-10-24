@@ -2,8 +2,10 @@ import Phaser from 'phaser';
 import { makeCar } from '../art/car';
 import { sfx } from '../audio/sfx';
 import { caption } from '../fx/Bubble';
-import { TALK } from '../fonts';
+import { SHOUT, TALK } from '../fonts';
 import { homeDistance } from '../logic/trip';
+import { loadRecent, pickFresh, rememberLines } from '../logic/plead';
+import { STORE_NAMES } from '../logic/texts';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP, wait } from './common';
 
@@ -38,6 +40,14 @@ export class Store extends Phaser.Scene {
 
   private async run() {
     this.add.image(640, 360, 'store');
+    // a different shop every time
+    const recent = loadRecent();
+    const name = pickFresh(STORE_NAMES, Math.random, recent);
+    rememberLines([name]);
+    const sign = this.add
+      .text(640, 156, name, { fontFamily: SHOUT, fontSize: '72px', color: '#ffffff', stroke: '#141414', strokeThickness: 8 })
+      .setOrigin(0.5);
+    if (sign.width > 1000) sign.setScale(1000 / sign.width);
     const car = makeCar(this, -300, 690, 'brown', 0.8);
     car.driver.setFace('angry', 'grit');
     sfx.screech();

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { crash, freshen, isRotten, rate, stageOf, tick, BASE_LIFETIME } from '../src/logic/ripeness';
-import { homeDistance, simulate, stepGauge, TURBO, type Gauge } from '../src/logic/trip';
+import { lightAt, lightPlan, pickCorridor, planEvents, rowGap, rowLanes, ROW_GAP_MIN, crowdSize } from '../src/logic/traffic';
+import { DAD_REPLY, STORE_NAMES, WIFE_TEXTS } from '../src/logic/texts';
+import { BRAKE_SPEED, homeDistance, simulate, stepGauge, TURBO, type Gauge } from '../src/logic/trip';
 import { MEMBERS, TONES, dealRound, familyOrder, pickFresh, redeemed, resultOf, startingRespect, threshold } from '../src/logic/plead';
 
 const base = { trip: 1, generation: 1, turbo: false, chilled: false };
@@ -157,5 +159,80 @@ describe('turbo gauge', () => {
     const g: Gauge = { level: 0.2, empty: false };
     stepGauge(g, false, 1);
     expect(g.level).toBeCloseTo(0.2 + TURBO.recharge);
+  });
+});
+
+describe('turbo + brake', () => {
+  it('braking refills the gauge faster than coasting', () => {
+    const a: Gauge = { level: 0.2, empty: false };
+    const b: Gauge = { level: 0.2, empty: false };
+    stepGauge(a, false, 1);
+    stepGauge(b, false, 1, true);
+    expect(b.level).toBeGreaterThan(a.level);
+  });
+});
+
+describe('fair traffic', () => {
+  const rnd = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+  it('a row never blocks all three lanes', () => {
+    const r = rnd(3);
+    for (let i = 0; i < 500; i++) expect(new Set(rowLanes(1 + (i % 3), r)).size).toBeLessThan(3);
+  });
+
+  it('during roadworks rows only use the lane that is neither works nor corridor', () => {
+    const r = rnd(5);
+    for (let works = 0; works < 3; works++)
+      for (let player = 0; player < 3; player++) {
+        const corridor = pickCorridor(works, player, r);
+        expect(corridor).not.toBe(works);
+        if (player !== works) expect(corridor).toBe(player); // never forces you to move
+        for (let i = 0; i < 50; i++) {
+          const lanes = rowLanes(2, r, { lane: works, corridor });
+          expect(lanes).not.toContain(works);
+          expect(lanes).not.toContain(corridor);
+          expect(lanes.length).toBeLessThanOrEqual(1);
+        }
+      }
+  });
+
+  it('rows always leave room to change lanes', () => {
+    for (let trip = 1; trip < 15; trip++) for (let t = 0; t < 200; t += 10) expect(rowGap(trip, t)).toBeGreaterThanOrEqual(ROW_GAP_MIN);
+  });
+
+  it('every trip has at least one crossroad, at a random spot', () => {
+    const r = rnd(9);
+    const spots = new Set<number>();
+    for (let i = 0; i < 40; i++) {
+      const plan = planEvents(1, 4, r);
+      expect(plan.filter((k) => k === 'crossroad').length).toBe(1);
+      spots.add(plan.indexOf('crossroad'));
+    }
+    expect(spots.size).toBeGreaterThan(1);
+  });
+
+  it('crosswalks get more crowded on later trips', () => {
+    expect(crowdSize(6, () => 0.9)).toBeGreaterThan(crowdSize(1, () => 0.9));
+  });
+
+  it('the light is red at normal speed, but turbo or braking both get a non-red light', () => {
+    const T = 3;
+    const p = lightPlan(T);
+    const react = 0.25 * T; // the player reacts a quarter of the way in
+    expect(lightAt(p, T)).toBe('red');
+    const turboArrive = react + (T - react) / 1.7;
+    expect(lightAt(p, turboArrive)).not.toBe('red');
+    // braking: distance covered by the time the light is green again is less than the full way
+    const covered = react + (p.greenAt - react) * BRAKE_SPEED;
+    expect(covered).toBeLessThan(T);
+  });
+});
+
+describe('texts', () => {
+  it('a big pool of wife texts, one fixed reply, many store names', () => {
+    expect(WIFE_TEXTS.length).toBeGreaterThanOrEqual(30);
+    expect(new Set(WIFE_TEXTS).size).toBe(WIFE_TEXTS.length);
+    expect(DAD_REPLY).toBe('🍌🍌🍌!!FUCK!!!');
+    expect(new Set(STORE_NAMES).size).toBeGreaterThanOrEqual(25);
   });
 });

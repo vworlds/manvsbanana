@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" ><rect width="1280" height="720" fill="#9FD5F2"/>
   <rect x="140" y="160" width="1000" height="380" fill="#E8E2D2" stroke="#141414" stroke-width="7"/>
   <rect x="120" y="110" width="1040" height="90" fill="#D3202A" stroke="#141414" stroke-width="7"/>
-  <text x="640" y="178" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="64" fill="#fff" stroke="#141414" stroke-width="3">BANANA MART</text>
   <rect x="200" y="260" width="300" height="200" fill="#BFE6FF" stroke="#141414" stroke-width="6"/>
   <rect x="780" y="260" width="300" height="200" fill="#BFE6FF" stroke="#141414" stroke-width="6"/>
   <rect x="560" y="300" width="160" height="240" fill="#7FB0D0" stroke="#141414" stroke-width="6"/><path d="M640 300 L640 540" stroke="#141414" stroke-width="5"/>

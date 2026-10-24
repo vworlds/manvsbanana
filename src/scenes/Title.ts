@@ -31,11 +31,12 @@ export class Title extends Phaser.Scene {
 
     const lines = [
       '↑ ↓  or  swipe  —  change lane',
-      'SPACE  or  hold right side  —  TURBO (it runs out; grab the blue cans)',
+      'SPACE / →  or  hold right edge  —  TURBO (runs out; grab the blue cans)',
+      '←  or  hold left edge  —  BRAKE (refills turbo a little)',
       'ENTER  or  tap phone  —  text your wife back',
       'Get home before they turn brown. They\'ll want more. They always want more.',
     ];
-    this.add.text(78, 320, lines.join('\n'), { fontFamily: TALK, fontStyle: '700', fontSize: '22px', color: '#ddd', lineSpacing: 12 });
+    this.add.text(78, 300, lines.join('\n'), { fontFamily: TALK, fontStyle: '700', fontSize: '21px', color: '#ddd', lineSpacing: 9 });
 
     if (state.best > 0)
       this.add.text(78, 500, `Best father: ${state.best.toLocaleString()} m   ·   Fathers who failed: ${state.fathers.length}`, {

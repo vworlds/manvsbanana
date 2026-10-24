@@ -33,7 +33,12 @@ export const TURBO = {
   pickup: 0.5,
   /** Must refill to this before turbo works again after running dry. */
   restart: 0.15,
+  /** Extra refill per second while braking. */
+  brakeRecharge: 0.06,
 };
+
+/** Speed multipliers. Easing back up from a brake is free (no turbo used). */
+export const BRAKE_SPEED = 0.5;
 
 export interface Gauge {
   level: number;
@@ -42,14 +47,14 @@ export interface Gauge {
 }
 
 /** Advance the gauge. Returns whether turbo is actually firing this frame. */
-export function stepGauge(g: Gauge, holding: boolean, dt: number): boolean {
+export function stepGauge(g: Gauge, holding: boolean, dt: number, braking = false): boolean {
   if (g.empty && g.level >= TURBO.restart) g.empty = false;
   const firing = holding && !g.empty && g.level > 0;
   if (firing) {
     g.level = Math.max(0, g.level - TURBO.drain * dt);
     if (g.level === 0) g.empty = true;
   } else {
-    g.level = Math.min(1, g.level + TURBO.recharge * dt);
+    g.level = Math.min(1, g.level + (TURBO.recharge + (braking ? TURBO.brakeRecharge : 0)) * dt);
   }
   return firing;
 }

@@ -6,6 +6,9 @@ import { SHOUT, TALK } from '../fonts';
 import { STAGE_START, type Stage } from '../logic/ripeness';
 import { state } from '../state/GameState';
 import { bubble } from '../fx/Bubble';
+import { DAD_OPENER, DAD_REPLY, WIFE_GIVE_UP, WIFE_NAGS, WIFE_TEXTS } from '../logic/texts';
+
+const pick = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
 
 const W = 1280;
 const H = 720;
@@ -29,6 +32,7 @@ export class Hud extends Phaser.Scene {
   private faceBubble?: Phaser.GameObjects.Container;
   private phone?: Phaser.GameObjects.Container;
   private phoneTimer?: Phaser.Time.TimerEvent;
+  private phoneY: () => number = () => 0;
   private cut?: Phaser.GameObjects.Container;
 
   constructor() {
@@ -61,8 +65,10 @@ export class Hud extends Phaser.Scene {
     this.add.graphics().lineStyle(6, 0x141414).strokeRect(fx - 115, fy - 90, 230, 180);
     this.tweens.add({ targets: this.face, y: fy + 12, duration: 120, yoyo: true, repeat: -1 });
 
-    // ---- touch turbo button
+    // ---- touch buttons: hold left edge = brake, right edge = turbo
     if (this.sys.game.device.input.touch) {
+      const br = this.add.circle(110, H - 110, 70, 0xd3202a, 0.5).setStrokeStyle(5, 0xffffff);
+      this.add.text(br.x, br.y, 'BRAKE', { fontFamily: SHOUT, fontSize: '30px', color: '#fff' }).setOrigin(0.5);
       const b = this.add.circle(W - 110, H - 110, 70, 0x1f8fd6, 0.55).setStrokeStyle(5, 0xffffff);
       this.add.text(b.x, b.y, 'TURBO', { fontFamily: SHOUT, fontSize: '30px', color: '#fff' }).setOrigin(0.5);
     }
@@ -74,12 +80,14 @@ export class Hud extends Phaser.Scene {
       this.bananaIcon.setTexture(`banana_${st}`);
       this.tweens.add({ targets: this.bananaIcon, scale: 0.7, duration: 120, yoyo: true });
     };
-    const onPhone = () => this.openPhone();
+    const onPhone = (at?: { x?: number }) => this.openPhone(at);
+    const onPhoneClose = () => this.dropPhone();
     bus.on('hud:say', onSay);
     bus.on('hud:cutin', onCut);
     bus.on('hud:stats', onStats);
     bus.on('hud:stage', onStage);
     bus.on('hud:phone', onPhone);
+    bus.on('hud:phone-close', onPhoneClose);
     this.input.keyboard?.on('keydown-ENTER', () => this.reply());
     this.events.once('shutdown', () => {
       bus.off('hud:say', onSay);
@@ -87,6 +95,7 @@ export class Hud extends Phaser.Scene {
       bus.off('hud:stats', onStats);
       bus.off('hud:stage', onStage);
       bus.off('hud:phone', onPhone);
+      bus.off('hud:phone-close', onPhoneClose);
       this.registry.set('phoneOpen', false);
     });
   }
@@ -151,41 +160,49 @@ export class Hud extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------- phone
-  private openPhone() {
+  /** The wife texts. It pops up at a random spot so you have to find it and tap it, fast. */
+  private openPhone(at?: { x?: number }) {
     if (this.phone) return;
-    const c = this.add.container(560, H + 340).setDepth(2000);
+    const x = Phaser.Math.Clamp(at?.x ?? 640, 170, W - 170);
+    const c = this.add.container(x, H + 340).setDepth(3500); // above any cut-in
     const body = this.add.image(0, 0, 'phone').setScale(0.75);
-    const msg = (y: number, text: string, mine: boolean) => {
+    c.add(body);
+    let y = -150;
+    const msg = (text: string, mine: boolean) => {
       const t = this.add
         .text(mine ? 105 : -105, y, text, {
-          fontFamily: TALK, fontStyle: '900', fontSize: '22px',
+          fontFamily: TALK, fontStyle: '900', fontSize: '20px',
           color: mine ? '#fff' : '#141414',
           backgroundColor: mine ? '#2F7CF6' : '#D8D9E0',
-          padding: { x: 12, y: 8 },
+          padding: { x: 10, y: 7 },
+          wordWrap: { width: 190 },
         })
-        .setOrigin(mine ? 1 : 0, 0.5);
+        .setOrigin(mine ? 1 : 0, 0);
       c.add(t);
+      y += t.height + 8;
       return t;
     };
-    c.add(body);
-    msg(-130, 'OMW home', true);
-    msg(-70, 'Where r u??', false);
+    msg(DAD_OPENER, true);
+    msg(pick(WIFE_TEXTS), false);
     const hint = this.add
-      .text(0, 150, this.sys.game.device.input.touch ? 'TAP PHONE TO REPLY' : 'ENTER TO REPLY', { fontFamily: SHOUT, fontSize: '30px', color: '#D3202A' })
+      .text(0, -262, this.sys.game.device.input.touch ? 'TAP PHONE TO REPLY!' : 'ENTER TO REPLY!', { fontFamily: SHOUT, fontSize: '32px', color: '#D3202A', stroke: '#ffffff', strokeThickness: 6 })
       .setOrigin(0.5);
     c.add(hint);
     this.tweens.add({ targets: hint, alpha: 0.3, duration: 300, yoyo: true, repeat: -1 });
-    this.tweens.add({ targets: c, y: H - 150, duration: 250, ease: 'Back.out' });
+    c.setAngle(Phaser.Math.Between(-7, 7));
+    this.tweens.add({ targets: c, y: H - 150, duration: 230, ease: 'Back.out' });
+    this.tweens.add({ targets: c, x: x + 6, duration: 50, yoyo: true, repeat: 5, delay: 230 }); // buzz
     body.setInteractive().on('pointerdown', () => this.reply());
     this.phone = c;
+    this.phoneY = () => y;
     this.registry.set('phoneOpen', true);
-    this.registry.set('phoneHit', (x: number, y: number) => Math.abs(x - c.x) < 140 && y > c.y - 230);
+    this.registry.set('phoneHit', (px: number, py: number) => Math.abs(px - c.x) < 150 && py > c.y - 240);
 
     this.phoneTimer = this.time.delayedCall(3200, () => {
-      msg(-10, '???', false);
+      msg(pick(WIFE_NAGS), false);
       sfx.phone();
       this.phoneTimer = this.time.delayedCall(2200, () => {
-        msg(50, 'Fine.', false);
+        msg(pick(WIFE_GIVE_UP), false);
         bus.emit('drive:phone-ignored');
         this.closePhone(700);
       });
@@ -197,11 +214,17 @@ export class Hud extends Phaser.Scene {
     this.phoneTimer?.remove();
     this.registry.set('phoneOpen', false);
     const t = this.add
-      .text(105, 40, '🍌🍌🍌!!FUCK!!!', { fontFamily: TALK, fontStyle: '900', fontSize: '24px', color: '#fff', backgroundColor: '#2F7CF6', padding: { x: 12, y: 8 } })
-      .setOrigin(1, 0.5);
+      .text(105, this.phoneY(), DAD_REPLY, { fontFamily: TALK, fontStyle: '900', fontSize: '22px', color: '#fff', backgroundColor: '#2F7CF6', padding: { x: 10, y: 7 } })
+      .setOrigin(1, 0);
     this.phone.add(t);
     bus.emit('drive:phone-reply');
     this.closePhone(500);
+  }
+
+  /** Put the phone away without counting it as ignored (the run is ending). */
+  private dropPhone() {
+    this.phoneTimer?.remove();
+    this.closePhone(0);
   }
 
   private closePhone(delay: number) {

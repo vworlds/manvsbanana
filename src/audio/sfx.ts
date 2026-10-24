@@ -116,6 +116,10 @@ export const sfx = {
     tone(990, 0.12, 'square', 0.18, undefined, 0.08);
     tone(1320, 0.16, 'square', 0.15, undefined, 0.16);
   },
+  siren: () => {
+    tone(960, 0.4, 'triangle', 0.07, 760);
+    tone(760, 0.4, 'triangle', 0.07, 960, 0.45);
+  },
   chomp: () => {
     noise(0.08, 0.5, 1800, 300);
     tone(180, 0.06, 'square', 0.1, 90);

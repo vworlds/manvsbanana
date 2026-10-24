@@ -209,6 +209,29 @@ save('car_taxi', npcCar('#F2C12E', npcHead(`<path d="M218 40 Q240 18 270 34" str
    <path d="M30 100 h320" stroke="#111" stroke-width="8" stroke-dasharray="12 12"/>`));
 save('car_white', npcCar('#E9E9EE', npcHead(`<path d="M220 40 Q244 14 274 36" stroke="#9A5A2B" stroke-width="12" fill="none" stroke-linecap="round"/>`, '#C68B59')));
 
+// Police car: white with black doors, POLICE on the side, a cop with a hat. Light bar lamps are drawn in-game.
+save('car_police', npcCar('#F4F4F8', npcHead(
+  `<path d="M214 34 L278 34 L270 18 L222 18 Z" fill="#1B2A55" stroke="${INK}" stroke-width="4"/><rect x="238" y="22" width="16" height="8" fill="#E0B400"/>`, '#C68B59'),
+  `<path d="M100 76 L242 76 L242 140 L100 140 Z" fill="#1B2A55" stroke="${INK}" stroke-width="4"/>
+   <text x="171" y="118" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#fff">POLICE</text>
+   <rect x="136" y="2" width="70" height="14" rx="4" fill="#666" stroke="${INK}" stroke-width="4"/>`));
+
+// Traffic signal on the kerb with an arm over the road; lamp colours drawn in-game.
+save('signal', svg(220, 360, `<rect x="14" y="40" width="16" height="320" fill="#555" stroke="${INK}" stroke-width="4"/>
+  <rect x="14" y="30" width="170" height="14" fill="#555" stroke="${INK}" stroke-width="4"/>
+  <rect x="160" y="10" width="50" height="130" rx="10" fill="#2B2B22" stroke="${INK}" stroke-width="5"/>
+  <circle cx="185" cy="38" r="15" fill="#4A2222"/><circle cx="185" cy="75" r="15" fill="#4A4422"/><circle cx="185" cy="112" r="15" fill="#224A22"/>`));
+save('cone', svg(50, 60, `<path d="M25 4 L44 54 L6 54 Z" fill="#FF7A1A" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M17 26 L33 26 M12 40 L38 40" stroke="#fff" stroke-width="6"/><rect x="2" y="52" width="46" height="7" rx="2" fill="#333"/>`));
+save('barrier', svg(150, 130, `<rect x="16" y="60" width="8" height="66" fill="#555"/><rect x="126" y="60" width="8" height="66" fill="#555"/>
+  <rect x="4" y="54" width="142" height="30" fill="#fff" stroke="${INK}" stroke-width="4"/>
+  <path d="M10 84 L34 54 M40 84 L64 54 M70 84 L94 54 M100 84 L124 54 M130 84 L146 64" stroke="#FF7A1A" stroke-width="12"/>
+  <rect x="4" y="54" width="142" height="30" fill="none" stroke="${INK}" stroke-width="4"/>
+  <path d="M75 2 L120 46 L75 50 L30 46 Z" fill="#F7B500" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+  <text x="75" y="38" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#141414">ROAD</text>
+  <text x="75" y="48" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="9" fill="#141414">WORK</text>`));
+save('stopline', svg(24, 280, `<rect x="2" y="0" width="20" height="280" fill="#fff" opacity="0.95"/>`));
+
 // Turbo refill pickup: an energy drink can.
 save('nitro', svg(80, 120, `<rect x="10" y="12" width="60" height="100" rx="10" fill="#1F8FD6" stroke="${INK}" stroke-width="6"/>
   <rect x="16" y="4" width="48" height="14" rx="5" fill="#C9CCD6" stroke="${INK}" stroke-width="5"/>
@@ -386,7 +409,6 @@ save('table', svg(1280, 260, `<path d="M20 60 Q640 -20 1260 60 L1240 150 Q640 21
 save('store', svg(1280, 720, `<rect width="1280" height="720" fill="#9FD5F2"/>
   <rect x="140" y="160" width="1000" height="380" fill="#E8E2D2" stroke="${INK}" stroke-width="7"/>
   <rect x="120" y="110" width="1040" height="90" fill="#D3202A" stroke="${INK}" stroke-width="7"/>
-  <text x="640" y="178" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="64" fill="#fff" stroke="${INK}" stroke-width="3">BANANA MART</text>
   <rect x="200" y="260" width="300" height="200" fill="#BFE6FF" stroke="${INK}" stroke-width="6"/>
   <rect x="780" y="260" width="300" height="200" fill="#BFE6FF" stroke="${INK}" stroke-width="6"/>
   <rect x="560" y="300" width="160" height="240" fill="#7FB0D0" stroke="${INK}" stroke-width="6"/><path d="M640 300 L640 540" stroke="${INK}" stroke-width="5"/>

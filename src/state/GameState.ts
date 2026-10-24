@@ -93,5 +93,9 @@ export const debug = (() => {
   return {
     fastRipe: p.has('fastripe') ? Number(p.get('fastripe')) || 8 : 1,
     scene: p.get('scene'),
+    /** Start at this trip number (testing difficulty). */
+    trip: Number(p.get('trip')) || 0,
+    /** Force the first road events, e.g. ?events=crossroad,works */
+    events: (p.get('events') ?? '').split(',').filter((e) => e === 'crosswalk' || e === 'crossroad' || e === 'works') as ('crosswalk' | 'crossroad' | 'works')[],
   };
 })();
