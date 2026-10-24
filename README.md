@@ -22,7 +22,7 @@ Difficulty lives in `src/logic/trip.ts` (distances, speed, turbo gauge) and `src
 
 **Controls:** ↑/↓ or swipe to change lanes · Space/→ (or hold the right edge) for turbo · ←/A (or hold the left edge)
 to brake, which also refills turbo a little · Enter / tap the phone to text your wife back · 1–4 to pick pleading lines ·
-M mute · V browser voices · Esc quit.
+M mute · Esc quit.
 
 **On the road:** traffic comes in rows that never block all three lanes; crosswalks (more crowded on later trips),
 crossroads with a traffic light (brake and wait, or turbo through; run the red and the police come after you),
