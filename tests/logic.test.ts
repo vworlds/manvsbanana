@@ -30,7 +30,7 @@ describe('ripeness', () => {
     const r0 = rate(base);
     expect(rate({ ...base, turbo: true })).toBeGreaterThan(r0);
     expect(rate({ ...base, chilled: true })).toBeLessThan(r0);
-    expect(rate({ ...base, trip: 3 })).toBeCloseTo(r0 * 1.2);
+    expect(rate({ ...base, trip: 3 })).toBeCloseTo(r0 * 1.26);
     expect(rate({ ...base, generation: 3 })).toBeGreaterThan(r0);
   });
 
@@ -114,13 +114,18 @@ describe('trips (difficulty curve)', () => {
     expect(simulate(1, 1, { crashes: 3 }).arrived).toBe(true);
   });
 
-  it('trip 2 is fine without turbo if you drive clean', () => {
+  it('trip 2 is fine if you drive clean, tight with a couple of crashes', () => {
     expect(simulate(2).arrived).toBe(true);
+    const crashed = simulate(2, 1, { crashes: 2 });
+    expect(crashed.arrived).toBe(true);
+    expect(crashed.ripeness).toBeGreaterThan(0.8); // arrives with brown-ish bananas
   });
 
-  it('trip 4 needs the turbo', () => {
-    expect(simulate(4).arrived).toBe(false);
-    expect(simulate(4, 1, { turbo: true }).arrived).toBe(true);
+  it('trip 3 needs clean driving; trip 4 needs turbo plus pickups', () => {
+    expect(simulate(3).arrived).toBe(true);
+    expect(simulate(3, 1, { crashes: 2 }).arrived).toBe(false);
+    expect(simulate(4, 1, { turbo: true }).arrived).toBe(false);
+    expect(simulate(4, 1, { turbo: true }).progress).toBeGreaterThan(0.8);
   });
 
   it('eventually even perfect driving fails (history repeats)', () => {

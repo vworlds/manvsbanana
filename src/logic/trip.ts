@@ -10,7 +10,7 @@ export const TURBO_SPEED = 1.7;
 
 /** Metres from the store to home on trip `trip` (1-based). */
 export function homeDistance(trip: number): number {
-  return 420 + 240 * (trip - 1);
+  return 420 + 265 * (trip - 1);
 }
 
 /** World speed in px/s, `t` seconds into a trip. */

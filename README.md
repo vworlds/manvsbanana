@@ -17,7 +17,7 @@ npm run art      # regenerate the SVG art in public/assets from scripts/gen-art.
   and the next generation drives.
 
 Difficulty lives in `src/logic/trip.ts` (distances, speed, turbo gauge) and `src/logic/ripeness.ts`;
-`npm test` simulates a perfect driver to keep the curve honest (trip 1 easy, trip 4 needs turbo, trip 8 hopeless).
+`npm test` simulates a perfect driver to keep the curve honest (trip 1 easy, trip 3 needs clean driving, trip 4 needs turbo plus pickups).
 
 **Controls:** ↑/↓ or swipe to change lanes · Space/→ (or hold the right edge) for turbo · ←/A (or hold the left edge)
 to brake, which also refills turbo a little · Enter / tap the phone to text your wife back · 1–4 to pick pleading lines ·

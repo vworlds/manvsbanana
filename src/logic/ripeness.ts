@@ -35,7 +35,7 @@ export interface TickInput {
 /** Per-second ripening rate. Faster on every trip and every generation. */
 export function rate(i: Omit<TickInput, 'dt'>): number {
   let r = 1 / BASE_LIFETIME;
-  r *= 1 + 0.1 * (i.trip - 1);
+  r *= 1 + 0.13 * (i.trip - 1);
   r *= 1 + 0.12 * (i.generation - 1);
   if (i.turbo) r *= TURBO_FACTOR;
   if (i.chilled) r *= CHILL_FACTOR;
