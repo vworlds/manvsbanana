@@ -5,11 +5,6 @@
   "seconds": 4.65
  },
  "dont_turn_yellow": {
-  "text": "DON'T TURN YELLOW, DON'T TURN YELLOW! DON'T TURN YELLOW, DON'T TURN YELLOW!",
-  "who": "dad",
-  "seconds": 4.05
- },
- "dont_turn_yellow_short": {
   "text": "DON'T TURN YELLOW, DON'T TURN YELLOW!",
   "who": "dad",
   "seconds": 1.95
@@ -29,15 +24,20 @@
   "who": "dad",
   "seconds": 2.17
  },
- "fuck_bananas": {
-  "text": "FUCK FUCK FUCK FUCK, BANANAS! HOLY FUCKING SHIT!",
+ "family_meltdown": {
+  "text": "FAMILY! I HAVE BANANAS! FUCK, FUCK, FUCK, FUCK! BANANAS!",
   "who": "dad",
-  "seconds": 3.2
+  "seconds": 3.73
  },
  "emergency": {
-  "text": "BANANA EMERGENCY! EAT THESE FUCKING BANANAS BEFORE THEY GO BAD, YOU GODDAMN MONSTERS! WHAT ARE YOU WAITING FOR, YOU PIECES OF SHIT?",
+  "text": "HOLY FUCKING SHIT! BANANA EMERGENCY!",
+  "who": "wife",
+  "seconds": 2.15
+ },
+ "monsters": {
+  "text": "EAT THESE FUCKING BANANAS BEFORE THEY GO BAD, YOU GODDAMN MONSTERS! WHAT ARE YOU WAITING FOR, YOU PIECES OF SHIT?!",
   "who": "dad",
-  "seconds": 7.2
+  "seconds": 6.39
  },
  "no_1": {
   "text": "No.",

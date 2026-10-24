@@ -7,7 +7,7 @@ import { EMERGENCY, ENTRANCE, PARDON, PROMISE } from '../logic/pleadLines';
 import { lineFrom } from '../logic/lines';
 import { voice } from '../audio/voice';
 import { state } from '../state/GameState';
-import { commonKeys, tweenP } from './common';
+import { commonKeys, tweenP, wait } from './common';
 import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, type Room, waitRead } from './room';
 
 const DAD_FACE: Record<Tone, [Eyes, Mouth]> = {
@@ -64,9 +64,11 @@ export class Plead extends Phaser.Scene {
     // He storms in.
     await tweenP(this, { targets: r.dad, x: SPOTS.dad.x, duration: 260, ease: 'Quad.out' });
     r.dad.setFace('wide', 'open').setPose('up').shout(600);
-    const fam = voice('family');
+    // As in the short: dad "FAMILY! I HAVE BANANAS! FUCK FUCK FUCK FUCK! BANANAS!" (the bag slam lands
+    // on the first "fuck"), the wife "HOLY FUCKING SHIT! BANANA EMERGENCY!", then dad's close-up rant.
+    const fam = voice('family_meltdown');
     sayAt(this, r, 'man', r.dad, fam?.text ?? lineFrom('plead.entrance', ENTRANCE), { ms: fam?.ms ?? 1300 });
-    await this.w(1300);
+    await wait(this, 1300);
 
     // Bag slam.
     r.bag.setVisible(true).setY(-200);
@@ -76,20 +78,21 @@ export class Plead extends Phaser.Scene {
     sfx.boom();
     this.cameras.main.shake(200, 0.015);
     addFlies(this, r, 4);
+    if (fam) r.dad.setFace('wide', 'open').setPose('up').shout(Math.max(0, fam.ms - 1520));
+    await this.w(300); // waits out the rest of his line
     r.dad.setPose('reach');
-    // straight from the short: the meltdown at the table
-    const fb = voice('fuck_bananas');
-    if (fb) {
-      r.dad.setFace('wide', 'open').setPose('up').shout(fb.ms);
-      sayAt(this, r, 'man', r.dad, fb.text, { ms: fb.ms });
-      await this.w(fb.ms);
-      r.dad.setPose('reach');
+
+    const em = voice('emergency');
+    if (em) {
+      r.wife.setFace('wide', 'open').shout(em.ms);
+      sayAt(this, r, 'wife', r.wife, em.text, { ms: em.ms });
+      await this.w(300);
     }
 
     cut(this, SPOTS.dad.x + 40, SPOTS.dad.y + 30, 1.7);
     r.dad.setFace('angry', 'open').shout(1600);
-    const em = voice('emergency');
-    sayAt(this, r, 'man', r.dad, em?.text ?? lineFrom('plead.emergency', EMERGENCY), { ms: em?.ms ?? 2200, dy: 150, size: 30 });
+    const rant = voice('monsters');
+    sayAt(this, r, 'man', r.dad, rant?.text ?? lineFrom('plead.emergency', EMERGENCY), { ms: rant?.ms ?? 2200, dy: 150, size: 30 });
     await this.w(2300);
 
     // The stare.

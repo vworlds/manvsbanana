@@ -4,9 +4,11 @@
 //   the same speed, so rows never drift into each other). A row never blocks
 //   all lanes, and rows are spaced at least ROW_GAP_MIN apart so there is room
 //   to change lanes between them.
-// * Road events (crosswalk, crossroad, roadworks) only start once the road
+// * Road events (crosswalk, crossroad, lane blocks) only start once the road
 //   ahead is clear of traffic, and only one event is on the road at a time.
-// * During roadworks in lane R, the player gets a fixed "corridor" lane C, and
+// * Lane blocks are roadworks, an accident (two crashed cars) or a stretch of
+//   dirt road (slows you down; traffic and police steer clear of it).
+// * During a lane block in lane R, the player gets a fixed "corridor" lane C, and
 //   rows may only use the remaining lane X. So at any slice of road at most
 //   two lanes are blocked and the open lane never requires crossing the works.
 // * Pedestrians always clear the road within the time it takes to reach the
@@ -54,7 +56,17 @@ export function rowLanes(count: number, rand: Rand, works?: Works): number[] {
 }
 
 // ------------------------------------------------------------- events
-export type EventKind = 'crosswalk' | 'crossroad' | 'works';
+export type BlockKind = 'works' | 'accident' | 'dirt';
+export type EventKind = 'crosswalk' | 'crossroad' | BlockKind;
+
+export const isBlock = (k: EventKind): k is BlockKind => k === 'works' || k === 'accident' || k === 'dirt';
+
+/** Which kind of lane block: trip 1 only gets dirt (it just slows you); later trips get all three. */
+export function blockKind(trip: number, rand: Rand): BlockKind {
+  if (trip < 2) return 'dirt';
+  const r = rand();
+  return r < 0.4 ? 'works' : r < 0.7 ? 'accident' : 'dirt';
+}
 
 /** Seconds between road events. More frequent on later trips. */
 export function eventInterval(trip: number): number {
@@ -67,12 +79,15 @@ export function crowdSize(trip: number, rand: Rand): number {
   return Math.max(1, base - (rand() < 0.4 ? 1 : 0));
 }
 
+/** Chance an event is a lane block (roadworks, accident, dirt) rather than a crosswalk. */
 export function worksChance(trip: number): number {
-  return trip < 2 ? 0 : Math.min(0.45, 0.2 + 0.06 * trip);
+  return trip < 2 ? 0.15 : Math.min(0.45, 0.2 + 0.06 * trip);
 }
 
-/** Roadworks length in px. */
-export function worksLength(trip: number, rand: Rand): number {
+/** Lane block length in px. An accident is just the two cars. */
+export function worksLength(trip: number, rand: Rand, kind: BlockKind = 'works'): number {
+  if (kind === 'accident') return 330;
+  if (kind === 'dirt') return 600 + Math.min(600, 100 * trip) + rand() * 300;
   return 450 + Math.min(700, 120 * trip) + rand() * 250;
 }
 
@@ -85,10 +100,12 @@ export function crossroadCount(trip: number): number {
 export function planEvents(trip: number, expectedEvents: number, rand: Rand): EventKind[] {
   const n = Math.max(expectedEvents, crossroadCount(trip) + 1);
   const plan: EventKind[] = [];
-  for (let i = 0; i < n; i++) plan.push(rand() < worksChance(trip) ? 'works' : 'crosswalk');
+  for (let i = 0; i < n; i++) plan.push(rand() < worksChance(trip) ? blockKind(trip, rand) : 'crosswalk');
   // turn some crosswalks into crossroads, at random positions (never the very first event on trip 1)
-  const candidates = plan.map((k, i) => (k === 'crosswalk' && !(trip === 1 && i === 0) ? i : -1)).filter((i) => i >= 0);
-  for (const i of shuffled(candidates, rand).slice(0, crossroadCount(trip))) plan[i] = 'crossroad';
+  // (crosswalks first; a lane block only gives way if there aren't enough crosswalks)
+  const spots = plan.map((_, i) => i).filter((i) => !(trip === 1 && i === 0));
+  const candidates = [...shuffled(spots.filter((i) => plan[i] === 'crosswalk'), rand), ...shuffled(spots.filter((i) => plan[i] !== 'crosswalk'), rand)];
+  for (const i of candidates.slice(0, crossroadCount(trip))) plan[i] = 'crossroad';
   return plan;
 }
 

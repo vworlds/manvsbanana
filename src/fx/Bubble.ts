@@ -14,9 +14,9 @@ export interface BubbleOpts {
   scale?: number;
 }
 
-/** How long a line stays up so it can be read: ~1.2s plus 60ms per character (never less than asked). */
+/** How long a line stays up so it can be read: 0.8s plus 45ms per character (never less than asked). */
 export function readTime(text: string, ms = 0): number {
-  return Math.max(ms, 1200 + text.length * 60);
+  return Math.max(ms, 800 + text.length * 45);
 }
 
 /** True when a line is written in capitals, so it gets the shouty treatment. */

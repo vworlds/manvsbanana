@@ -23,7 +23,7 @@ describe('line pools', () => {
 
   it('the canon lines from the short are kept', () => {
     expect(drive.start_new).toContain('FUCK FUCK FUCK FUCK! I GOTTA GET THESE BANANAS HOME BEFORE THEY GO BAD!');
-    expect(drive.stage_yellow).toContain("DON'T TURN YELLOW DON'T TURN YELLOW!");
+    expect(drive.light_close).toContain("DON'T TURN YELLOW, DON'T TURN YELLOW!");
     expect(home.kid_failed).toContain('Father has failed.');
   });
 

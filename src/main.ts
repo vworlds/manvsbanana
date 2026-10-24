@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { unlock } from './audio/sfx';
+import { setupFullscreen } from './fullscreen';
 import { Boot } from './scenes/Boot';
 import { Title } from './scenes/Title';
 import { Drive } from './scenes/Drive';
@@ -16,6 +17,8 @@ async function fontsReady() {
 
 // Audio can only start after a user gesture: unlock it on the first key or tap anywhere.
 for (const ev of ['pointerdown', 'keydown', 'touchstart'] as const) window.addEventListener(ev, unlock, { once: true, capture: true });
+
+setupFullscreen();
 
 void fontsReady().then(() => {
   const game = new Phaser.Game({

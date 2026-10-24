@@ -1,0 +1,10 @@
+{
+  "name": "Man VS Banana",
+  "short_name": "Man VS Banana",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [{ "src": "assets/banana_yellow.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

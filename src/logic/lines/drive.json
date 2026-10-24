@@ -75,7 +75,6 @@
  "idle": [
   "I GOTTA GET THESE BANANAS HOME!",
   "COME ON COME ON, I GOT BANANAS HERE!",
-  "DON'T TURN YELLOW. DON'T TURN YELLOW.",
   "Breathe. They're just bananas.",
   "THEY'RE NOT JUST BANANAS!",
   "Hold on, babies. Daddy's coming.",
@@ -521,7 +520,6 @@
   "I'LL NEVER LOVE PRODUCE AGAIN! NEVER!"
  ],
  "stage_yellow": [
-  "DON'T TURN YELLOW DON'T TURN YELLOW!",
   "Yellow?! You were GREEN like five minutes ago!",
   "NO! TOO EARLY! YOU'RE TOO YOUNG TO BE YELLOW!",
   "They're yellow. They grow up so fast. TOO FAST!",
@@ -678,5 +676,41 @@
   "Ignore it. Ignore it. Love you. Ignore it.",
   "SHE'S GONNA CHANGE THE WIFI PASSWORD AGAIN!",
   "SORRY, BABE! BANANAS FIRST! TODAY AND FOREVER!"
+ ],
+ "light_close": [
+  "DON'T TURN YELLOW, DON'T TURN YELLOW!"
+ ],
+ "accident_seen": [
+  "A CRASH?! People, crash on your OWN time!",
+  "Two cars kissed. Great. Romance blocks the road.",
+  "Oh, a pile-up. Get in line, I'm about to have one.",
+  "Rubberneckers are rotting my bananas!",
+  "Nobody's hurt? GOOD! NOW MOVE!",
+  "Exchange insurance FASTER!",
+  "Sorry for your loss! I'M ABOUT TO HAVE ONE TOO!",
+  "Accident ahead. Not mine. Yet."
+ ],
+ "accident_hit": [
+  "PILE-UP! I made it a three-car pile-up!",
+  "NOW THERE'S THREE OF US!",
+  "I'll exchange insurance LATER!",
+  "MY BANANAS! I'M SUING EVERYONE!",
+  "That was already a crash! I just made it a bigger one!"
+ ],
+ "dirt_seen": [
+  "Dirt road?! In the CITY?!",
+  "Who paves a road with DIRT?!",
+  "Potholes. Lovely. Banana death traps.",
+  "That's not a road, that's a farm!",
+  "Stay off the mud. Stay off the mud.",
+  "The city fixed nothing! NOTHING!"
+ ],
+ "dirt": [
+  "MUD! GET OUT OF THE MUD!",
+  "Bumpy bumpy bumpy! SORRY, BABIES!",
+  "We're crawling! WE'RE CRAWLING!",
+  "My grandma drives faster than this! She's DEAD!",
+  "Rocks! Rocks in my bananas!",
+  "THIS ISN'T OFF-ROADING, THIS IS OFF-LIVING!"
  ]
 }

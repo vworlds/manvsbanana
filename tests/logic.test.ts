@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { crash, freshen, isRotten, rate, stageOf, tick, BASE_LIFETIME } from '../src/logic/ripeness';
-import { lightAt, lightPlan, pickCorridor, planEvents, rowGap, rowLanes, ROW_GAP_MIN, crowdSize } from '../src/logic/traffic';
+import { blockKind, isBlock, lightAt, lightPlan, pickCorridor, planEvents, rowGap, rowLanes, ROW_GAP_MIN, crowdSize } from '../src/logic/traffic';
 import { DAD_REPLY, WIFE_TEXTS } from '../src/logic/texts';
 import home from '../src/logic/lines/home.json';
 import { BRAKE_SPEED, homeDistance, simulate, stepGauge, TURBO, type Gauge } from '../src/logic/trip';
@@ -207,6 +207,20 @@ describe('fair traffic', () => {
       spots.add(plan.indexOf('crossroad'));
     }
     expect(spots.size).toBeGreaterThan(1);
+  });
+
+  it('lane blocks: trip 1 only gets dirt; later trips get roadworks, accidents and dirt; crossroads always fit', () => {
+    const r = rnd(3);
+    for (let i = 0; i < 200; i++) expect(blockKind(1, r)).toBe('dirt');
+    const kinds = new Set<string>();
+    for (let trip = 1; trip < 8; trip++)
+      for (let i = 0; i < 100; i++) {
+        const plan = planEvents(trip, 2, r);
+        expect(plan.filter((k) => k === 'crossroad').length).toBe(trip >= 3 ? 2 : 1);
+        if (trip === 1) expect(plan[0]).not.toBe('crossroad');
+        plan.filter(isBlock).forEach((k) => kinds.add(k));
+      }
+    expect([...kinds].sort()).toEqual(['accident', 'dirt', 'works']);
   });
 
   it('crosswalks get more crowded on later trips', () => {

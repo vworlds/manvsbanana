@@ -19,13 +19,15 @@ const OUT = join(ROOT, 'public', 'audio', 'vo');
 
 export const CLIPS = [
   { id: 'intro', from: 2.1, to: 6.75, who: 'dad', text: 'OH SHIT SHIT SHIT SHIT. I GOTTA GET THESE BANANAS HOME BEFORE THEY GO BAD!' },
-  { id: 'dont_turn_yellow', from: 7.6, to: 11.65, who: 'dad', text: "DON'T TURN YELLOW, DON'T TURN YELLOW! DON'T TURN YELLOW, DON'T TURN YELLOW!" },
-  { id: 'dont_turn_yellow_short', from: 7.6, to: 9.55, who: 'dad', text: "DON'T TURN YELLOW, DON'T TURN YELLOW!" },
+  // the short says it twice; one round is enough
+  { id: 'dont_turn_yellow', from: 7.6, to: 9.55, who: 'dad', text: "DON'T TURN YELLOW, DON'T TURN YELLOW!" },
   { id: 'come_on', from: 17.25, to: 19.6, who: 'dad', text: "COME ON, COME ON, COME ON. I'VE GOT BANANAS HERE!" },
   { id: 'fuck', from: 19.6, to: 20.45, who: 'dad', text: 'FUCK!' },
   { id: 'family', from: 34.08, to: 36.25, who: 'dad', text: 'FAMILY! I HAVE BANANAS!' },
-  { id: 'fuck_bananas', from: 36.28, to: 39.48, who: 'dad', text: 'FUCK FUCK FUCK FUCK, BANANAS! HOLY FUCKING SHIT!' },
-  { id: 'emergency', from: 39.55, to: 46.75, who: 'dad', text: 'BANANA EMERGENCY! EAT THESE FUCKING BANANAS BEFORE THEY GO BAD, YOU GODDAMN MONSTERS! WHAT ARE YOU WAITING FOR, YOU PIECES OF SHIT?' },
+  // the meltdown, split between them as in the short: dad / wife / dad
+  { id: 'family_meltdown', from: 34.45, to: 38.18, who: 'dad', text: 'FAMILY! I HAVE BANANAS! FUCK, FUCK, FUCK, FUCK! BANANAS!' },
+  { id: 'emergency', from: 38.21, to: 40.36, who: 'wife', text: 'HOLY FUCKING SHIT! BANANA EMERGENCY!' },
+  { id: 'monsters', from: 40.36, to: 46.75, who: 'dad', text: 'EAT THESE FUCKING BANANAS BEFORE THEY GO BAD, YOU GODDAMN MONSTERS! WHAT ARE YOU WAITING FOR, YOU PIECES OF SHIT?!' },
   { id: 'no_1', from: 47.02, to: 47.5, who: 'dad', text: 'No.' },
   { id: 'no_2', from: 50.33, to: 51.0, who: 'dad', text: 'No.' },
   { id: 'no_3', from: 52.68, to: 53.2, who: 'dad', text: 'No.' },

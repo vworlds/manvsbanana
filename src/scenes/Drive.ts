@@ -8,6 +8,7 @@ import { readTime } from '../fx/Bubble';
 import { voice, type ClipId } from '../audio/voice';
 import { crash, freshen, isRotten, stageOf, tick, type Stage } from '../logic/ripeness';
 import {
+  blockKind,
   crowdSize,
   eventInterval,
   lightAt,
@@ -18,7 +19,9 @@ import {
   rowGap,
   rowLanes,
   twoCarChance,
+  worksChance,
   worksLength,
+  type BlockKind,
   type EventKind,
   type Light,
   type LightPlan,
@@ -37,6 +40,10 @@ const GROUND = (lane: number) => LANE_Y[lane] + 36;
 const CAR_X = 260;
 const CAR_SCALE = 0.55;
 const CAR_HALF = 100;
+/** Quiet time (ms) after a full-screen cut-in before another one may start. */
+const CUTIN_GAP = 4000;
+/** Speed on the dirt stretch (fraction of normal). */
+const DIRT_SLOW = 0.5;
 const SPAWN_X = W + 160;
 /** The wife doesn't text once the bananas are nearly brown: the brown cut-in would bury her message. */
 const PHONE_MAX_RIPENESS = 0.76;
@@ -53,7 +60,8 @@ interface Thing {
   vy: number;
   hit: boolean;
   car?: Car;
-  /** Roadworks length in px. */
+  /** Lane block (roadworks, accident, dirt) and its length in px. */
+  block?: BlockKind;
   len?: number;
   /** Traffic light. */
   plan?: LightPlan;
@@ -61,6 +69,10 @@ interface Thing {
   light?: Light;
   lamp?: Phaser.GameObjects.Arc;
   passed?: boolean;
+  /** The first light of a trip: shout "DON'T TURN YELLOW" at it once it's on screen. */
+  shoutAt?: boolean;
+  /** Re-time the light once the shout's cut-in is over, so the cut-in doesn't eat your reaction time. */
+  replan?: boolean;
 }
 
 interface Police {
@@ -117,13 +129,21 @@ export class Drive extends Phaser.Scene {
   private nextEvent = 3;
   private pending: EventKind | null = null;
   private eventAnchor: Thing | null = null;
-  private works: (Works & { thing: Thing }) | null = null;
+  /** The lane block on the road (roadworks, accident or dirt), if any. */
+  private works: (Works & { thing: Thing; kind: BlockKind }) | null = null;
+  private onDirt = false;
+  private dustTimer = 0;
+  private rumbleTimer = 0;
+  private lightsSeen = 0;
   private police: Police | null = null;
   private sirenTimer = 0;
   // pickups, phone, chatter
   private nextPickup = 4;
   private phoneMarks: number[] = [];
   private cutinUntil = 0;
+  /** No cut-in before this time; one that comes up earlier waits in `queuedCutin`. */
+  private nextCutinAt = 0;
+  private queuedCutin: (() => void) | null = null;
   private nextIdleLine = 6;
   private bg: Record<string, Phaser.GameObjects.TileSprite> = {};
   private speedLines!: Phaser.GameObjects.Image;
@@ -166,6 +186,10 @@ export class Drive extends Phaser.Scene {
     this.pending = null;
     this.eventAnchor = null;
     this.works = null;
+    this.onDirt = false;
+    this.dustTimer = 0;
+    this.rumbleTimer = 0;
+    this.lightsSeen = 0;
     this.police = null;
     this.sirenTimer = 0;
     this.nextPickup = 4;
@@ -173,6 +197,8 @@ export class Drive extends Phaser.Scene {
     const texts = state.trip === 1 || Math.random() < 0.4 ? 1 : 2;
     this.phoneMarks = texts === 1 ? [0.2 + Math.random() * 0.45] : [0.15 + Math.random() * 0.2, 0.5 + Math.random() * 0.25];
     this.cutinUntil = 0;
+    this.nextCutinAt = 0;
+    this.queuedCutin = null;
     this.nextIdleLine = 6;
     this.registry.set('driveMode', data.mode ?? 'new');
   }
@@ -324,7 +350,14 @@ export class Drive extends Phaser.Scene {
   /** Full-screen close-up. Never while the phone is up (it would hide it): then it's a normal line. */
   private cutIn(text: string, eyes: Eyes, mouth: Mouth, ms = 1100) {
     if (this.registry.get('phoneOpen')) return this.say(text, eyes, mouth, ms);
+    // too soon after the last one: wait for the gap (only the latest waiting cut-in is kept)
+    if (this.time.now < this.nextCutinAt) {
+      this.queuedCutin = () => this.cutIn(text, eyes, mouth, ms);
+      return;
+    }
     ms = readTime(text, ms);
+    this.nextCutinAt = this.time.now + ms + CUTIN_GAP;
+    this.nextIdleLine = Math.max(this.nextIdleLine, (ms + CUTIN_GAP) / 1000); // no chatter right after it either
     this.driver.setFace(eyes, mouth);
     sfx.sting();
     this.slowmo = 0.12;
@@ -365,7 +398,7 @@ export class Drive extends Phaser.Scene {
   private startEvent(kind: EventKind) {
     if (kind === 'crosswalk') this.spawnCrosswalk(false);
     else if (kind === 'crossroad') this.spawnCrosswalk(true);
-    else this.spawnWorks();
+    else this.spawnBlock(kind);
   }
 
   private spawnCrosswalk(crossroad: boolean) {
@@ -386,11 +419,11 @@ export class Drive extends Phaser.Scene {
       anchor.lamp = lamp;
       // red exactly when you'd arrive at normal speed: turbo through, or brake and wait
       // timed against how fast you're going right now: keep going and it's red
-      const v = Math.max(this.speed, baseSpeed(state.trip, this.elapsed) * 0.8);
-      anchor.plan = lightPlan((x - 10 - (CAR_X + CAR_HALF)) / v);
-      anchor.clock = 0;
+      this.planLight(anchor);
       anchor.light = 'green';
-      this.time.delayedCall(300, () => this.say(driveLine('crossroad_seen'), 'wide', 'grit'));
+      // the first light of a trip gets the short's "DON'T TURN YELLOW" once it comes into view (see updateLight)
+      if (this.lightsSeen++ === 0) anchor.shoutAt = true;
+      else this.time.delayedCall(300, () => this.say(driveLine('crossroad_seen'), 'wide', 'grit'));
     } else {
       c.add(this.add.image(walkX, ROAD_TOP + 4, 'crosswalk').setOrigin(0.5, 0));
       c.add(this.add.image(90, ROAD_TOP + 2, 'yield').setOrigin(0.5, 1).setScale(0.6));
@@ -418,21 +451,52 @@ export class Drive extends Phaser.Scene {
     });
   }
 
-  private spawnWorks() {
+  /** A lane block: roadworks, two crashed cars, or a stretch of dirt road. Traffic stays out of its lane. */
+  private spawnBlock(kind: BlockKind) {
     const lane = Phaser.Math.Between(0, 2);
     const corridor = pickCorridor(lane, this.lane, Math.random);
-    const len = worksLength(state.trip, Math.random);
+    const len = worksLength(state.trip, Math.random, kind);
     const c = this.add.container(W + 220, 0);
     const y = GROUND(lane);
-    for (let cx = 70; cx < len; cx += 85) c.add(this.add.image(cx, y - 6, 'cone').setOrigin(0.5, 1).setScale(0.8));
-    c.add(this.add.image(len * 0.5, y - 10, `ped_${Phaser.Math.Between(0, 7)}`).setOrigin(0.5, 1).setScale(0.5));
-    c.add(this.add.image(20, y, 'barrier').setOrigin(0.5, 1).setScale(0.75));
-    c.add(this.add.image(len, y, 'barrier').setOrigin(0.5, 1).setScale(0.6));
-    const thing: Thing = { kind: 'works', obj: c, lane, own: 0, vy: 0, hit: false, len };
+    if (kind === 'works') {
+      for (let cx = 70; cx < len; cx += 85) c.add(this.add.image(cx, y - 6, 'cone').setOrigin(0.5, 1).setScale(0.8));
+      c.add(this.add.image(len * 0.5, y - 10, `ped_${Phaser.Math.Between(0, 7)}`).setOrigin(0.5, 1).setScale(0.5));
+      c.add(this.add.image(20, y, 'barrier').setOrigin(0.5, 1).setScale(0.75));
+      c.add(this.add.image(len, y, 'barrier').setOrigin(0.5, 1).setScale(0.6));
+    } else if (kind === 'accident') {
+      // one car rear-ended the other; both are stuck in the lane, steaming
+      const [k1, k2] = Phaser.Utils.Array.Shuffle(['car_green', 'car_red', 'car_taxi', 'car_white']);
+      const back = makeNpcCar(this, 105, y, k1, CAR_SCALE);
+      const front = makeNpcCar(this, 250, y, k2, CAR_SCALE);
+      back.root.setAngle(-7);
+      front.root.setAngle(6);
+      c.add([back.root, front.root]);
+      c.add(this.add.image(0, y - 4, 'cone').setOrigin(0.5, 1).setScale(0.7));
+      for (let i = 0; i < 3; i++) {
+        const puff = this.add.image(170 + i * 14, y - 70, 'puff').setScale(0.35).setAlpha(0).setTint(0xcccccc);
+        c.add(puff);
+        this.tweens.add({ targets: puff, y: y - 170, scale: 0.8, alpha: { from: 0.8, to: 0 }, duration: 1200, delay: i * 400, repeat: -1 });
+      }
+    } else {
+      // broken road: a long brown patch with potholes and stones, flat on the ground
+      const g = this.add.graphics();
+      const top = LANE_Y[lane] - 36;
+      const bot = LANE_Y[lane] + 40;
+      const mid = (top + bot) / 2;
+      g.fillStyle(0x8a5a2e, 1);
+      for (let x = 30; x < len - 30; x += 46) g.fillEllipse(x, mid + Phaser.Math.Between(-6, 6), 110 + Math.random() * 40, bot - top - Math.random() * 14);
+      g.fillStyle(0x6b4220, 1);
+      for (let x = 60; x < len - 60; x += 70 + Math.random() * 60) g.fillEllipse(x, Phaser.Math.Between(top + 18, bot - 18), 34 + Math.random() * 24, 14 + Math.random() * 8);
+      g.fillStyle(0xa8a29a, 1);
+      for (let i = 0; i < len / 25; i++) g.fillCircle(20 + Math.random() * (len - 40), Phaser.Math.Between(top + 8, bot - 8), 3 + Math.random() * 4);
+      c.add(g);
+    }
+    const thing: Thing = { kind: 'works', block: kind, obj: c, lane, own: 0, vy: 0, hit: false, len };
     this.things.push(thing);
-    this.works = { lane, corridor, thing };
+    this.works = { lane, corridor, thing, kind };
     this.eventAnchor = thing;
-    this.time.delayedCall(300, () => this.say(driveLine('works_seen'), 'angry', 'open'));
+    const seen = kind === 'works' ? 'works_seen' : kind === 'accident' ? 'accident_seen' : 'dirt_seen';
+    this.time.delayedCall(300, () => this.say(driveLine(seen), 'angry', 'open'));
   }
 
   private spawnPickup() {
@@ -591,7 +655,16 @@ export class Drive extends Phaser.Scene {
     const target = braking ? BRAKE_SPEED : fast ? TURBO_SPEED : 1;
     // ease toward the target speed; coming back up from a brake costs no turbo
     this.mult += (target - this.mult) * Math.min(1, dt * 5);
-    this.speed = baseSpeed(state.trip, this.elapsed) * this.mult * this.recover;
+    // dirt road: slow until you get off it
+    const w = this.works;
+    const dirt = !!w && w.kind === 'dirt' && w.lane === this.lane && CAR_X + CAR_HALF * 0.6 > w.thing.obj.x && CAR_X - CAR_HALF * 0.6 < w.thing.obj.x + (w.thing.len ?? 0);
+    if (dirt && !this.onDirt) {
+      if (!w!.thing.hit) this.say(driveLine('dirt'), 'angry', 'grit');
+      w!.thing.hit = true; // say it once per patch
+      this.pop(CAR_X, this.car.y - 120, 'DIRT ROAD!', '#8A5A2E');
+    }
+    this.onDirt = dirt;
+    this.speed = baseSpeed(state.trip, this.elapsed) * this.mult * this.recover * (dirt ? DIRT_SLOW : 1);
     const metres = (this.speed * dt) / PX_PER_M;
     state.distance += metres;
     this.tripDist += metres;
@@ -601,7 +674,24 @@ export class Drive extends Phaser.Scene {
     this.exhaust.setDepth(99 + this.car.y);
     // nose dips when braking, lifts on turbo
     this.carBody.angle = Phaser.Math.Linear(this.carBody.angle, braking ? 2.5 : fast ? -2 : 0, 0.2);
-    this.carBody.y = Math.sin(this.elapsed * 60) * 1.5;
+    this.carBody.y = Math.sin(this.elapsed * 60) * (this.onDirt ? 5 : 1.5);
+    if (this.onDirt) {
+      this.carBody.angle += Phaser.Math.FloatBetween(-1.5, 1.5);
+      // rumble: the screen shakes, the tyres thud, and phones buzz
+      this.rumbleTimer -= realDt;
+      if (this.rumbleTimer <= 0) {
+        this.rumbleTimer = 0.11 + Math.random() * 0.05;
+        this.cameras.main.shake(140, 0.0035);
+        sfx.rumble();
+        navigator.vibrate?.(35);
+      }
+      this.dustTimer -= dt;
+      if (this.dustTimer <= 0) {
+        this.dustTimer = 0.07;
+        const d = this.add.image(CAR_X - 90, this.car.y - 15, 'puff').setScale(0.3).setTint(0x9a6a3a).setAlpha(0.8).setDepth(99 + this.car.y);
+        this.tweens.add({ targets: d, x: d.x - 120, y: d.y - 40, scale: 0.7, alpha: 0, duration: 500, onComplete: () => d.destroy() });
+      }
+    }
 
     // ripening
     this.ripeness = tick(this.ripeness, {
@@ -658,7 +748,7 @@ export class Drive extends Phaser.Scene {
       }
     } else if (!this.pending) {
       this.nextEvent -= dt;
-      if (this.nextEvent <= 0 && left > 140) this.pending = this.roadPlan.shift() ?? (state.trip > 1 && Math.random() < 0.3 ? 'works' : 'crosswalk');
+      if (this.nextEvent <= 0 && left > 140) this.pending = this.roadPlan.shift() ?? (Math.random() < worksChance(state.trip) ? blockKind(state.trip, Math.random) : 'crosswalk');
     }
     if (this.pending && this.roadClearAhead() && left > 110) {
       this.startEvent(this.pending);
@@ -673,6 +763,11 @@ export class Drive extends Phaser.Scene {
       this.nextPickup = 5 + Math.random() * 4;
     }
     this.maybePhone(left);
+    if (this.queuedCutin && this.time.now >= this.nextCutinAt) {
+      const c = this.queuedCutin;
+      this.queuedCutin = null;
+      c();
+    }
     if (this.nextIdleLine <= 0) {
       const l = driveLine('idle');
       this.say(l, l === l.toUpperCase() ? 'angry' : 'worried', l === l.toUpperCase() ? 'open' : 'grit');
@@ -706,9 +801,9 @@ export class Drive extends Phaser.Scene {
         if (t.vy < 0 && t.obj.y < ROAD_TOP - 5) t.vy = 0;
       }
       if (t.kind === 'light') this.updateLight(t, dt);
-      if (t.kind === 'works') t.obj.setDepth(100 + GROUND(t.lane) - 1);
+      if (t.kind === 'works') t.obj.setDepth(t.block === 'dirt' ? 9 : 100 + GROUND(t.lane) - 1);
       else if (t.kind !== 'decor' && t.kind !== 'light') t.obj.setDepth(100 + t.obj.y);
-      if (!t.hit) this.collide(t);
+      if (!t.hit && t.block !== 'dirt') this.collide(t);
     }
     this.things = this.things.filter((t) => {
       if ((t.obj.x + (t.len ?? 0) < -320 && t.kind !== 'police') || !t.obj.active) {
@@ -733,8 +828,31 @@ export class Drive extends Phaser.Scene {
     });
   }
 
+  /** Red exactly when you'd arrive at your current speed: turbo through, or brake and wait. */
+  private planLight(t: Thing) {
+    const v = Math.max(this.speed, baseSpeed(state.trip, this.elapsed) * 0.8);
+    t.plan = lightPlan((t.obj.x - 10 - (CAR_X + CAR_HALF)) / v);
+    t.clock = 0;
+  }
+
   private updateLight(t: Thing, dt: number) {
     t.clock = (t.clock ?? 0) + dt;
+    if (t.shoutAt && t.obj.x < CAR_X + 600) {
+      // another cut-in kept it from happening in time: just a line, then
+      t.shoutAt = false;
+      this.say(driveLine('crossroad_seen'), 'wide', 'grit');
+    }
+    if (t.shoutAt && t.obj.x < W - 60 && this.time.now >= this.nextCutinAt) {
+      // the signal is on screen and still green (the cut-in slows the light down with everything else)
+      t.shoutAt = false;
+      t.replan = true;
+      const v = voice('dont_turn_yellow');
+      this.cutIn(v?.text ?? driveLine('light_close'), 'wide', 'open', v?.ms);
+    }
+    if (t.replan && this.slowmo === 1) {
+      t.replan = false;
+      this.planLight(t);
+    }
     const l = lightAt(t.plan!, t.clock);
     if (l !== t.light) {
       t.light = l;
@@ -799,18 +917,20 @@ export class Drive extends Phaser.Scene {
       if (y > ROAD_TOP + 10 && y < ROAD_BOT + 30 && Math.abs(y - this.car.y) < 38 && dx < CAR_HALF) this.hitPed(t);
     } else if (t.kind === 'works') {
       const x0 = t.obj.x;
-      if (t.lane === this.lane && CAR_X + CAR_HALF > x0 && CAR_X - CAR_HALF < x0 + (t.len ?? 0)) this.hitWorks();
+      if (t.lane === this.lane && CAR_X + CAR_HALF > x0 && CAR_X - CAR_HALF < x0 + (t.len ?? 0)) this.hitWorks(t.block === 'accident');
     }
   }
 
-  private hitWorks() {
+  private hitWorks(accident = false) {
     this.ripeness = crash(this.ripeness);
     this.invuln = 1.3;
     this.recover = 0.35;
     sfx.crash();
+    if (accident) sfx.screech();
     this.cameras.main.shake(240, 0.012);
-    this.pop(CAR_X, this.car.y - 120, 'CONES!', '#FF7A1A');
-    this.say(driveLine('cones'), 'angry', 'open');
+    this.pop(CAR_X, this.car.y - 120, accident ? 'PILE-UP!' : 'CONES!', accident ? '#D3202A' : '#FF7A1A');
+    const v = accident ? this.clip('fuck') : null;
+    this.say(v?.text ?? driveLine(accident ? 'accident_hit' : 'cones'), 'angry', 'open', v?.ms);
   }
 
   private crashInto(t: Thing) {
@@ -858,7 +978,7 @@ export class Drive extends Phaser.Scene {
     if (t.kind === 'chant') {
       this.ripeness = freshen(this.ripeness, 0.05);
       this.invuln = 3;
-      const v = voice('dont_turn_yellow_short');
+      const v = voice('dont_turn_yellow');
       this.say(v?.text ?? driveLine('chant'), 'shut', 'open', v?.ms ?? 1800);
     }
     this.pop(CAR_X + 40, this.car.y - 130, PICKUP_TEXT[t.kind], '#2EAA3A');
@@ -879,10 +999,7 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setTexture(`banana_${st}`);
     bus.emit('hud:stage', st);
     if (!worse) return;
-    if (st === 'yellow') {
-      const v = voice('dont_turn_yellow');
-      this.cutIn(v?.text ?? driveLine('stage_yellow'), 'wide', 'open', v?.ms);
-    }
+    if (st === 'yellow') this.cutIn(driveLine('stage_yellow'), 'wide', 'open');
     if (st === 'spotty') this.cutIn(driveLine('stage_spotty'), 'angry', 'open');
     if (st === 'brown') this.cutIn(driveLine('stage_brown'), 'crying', 'wail');
   }

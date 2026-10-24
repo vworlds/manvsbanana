@@ -1,5 +1,7 @@
 // Run-wide state shared by every scene. Only `best` and `fathers` persist.
 
+import type { EventKind } from '../logic/traffic';
+
 export interface Father {
   generation: number;
   distance: number;
@@ -100,7 +102,7 @@ export const debug = (() => {
     park: p.get('park'),
     /** Start at this trip number (testing difficulty). */
     trip: Number(p.get('trip')) || 0,
-    /** Force the first road events, e.g. ?events=crossroad,works */
-    events: (p.get('events') ?? '').split(',').filter((e) => e === 'crosswalk' || e === 'crossroad' || e === 'works') as ('crosswalk' | 'crossroad' | 'works')[],
+    /** Force the first road events, e.g. ?events=crossroad,works,accident,dirt */
+    events: (p.get('events') ?? '').split(',').filter((e): e is EventKind => ['crosswalk', 'crossroad', 'works', 'accident', 'dirt'].includes(e)),
   };
 })();

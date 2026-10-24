@@ -104,6 +104,11 @@ export const sfx = {
     tone(784, 0.12, 'square', 0.15, undefined, 0.07);
   },
   lane: () => tone(300, 0.06, 'triangle', 0.15, 420),
+  /** One bump of tyres on a rough road; played over and over while on dirt. */
+  rumble: () => {
+    noise(0.14, 0.35, 260, 50);
+    tone(42 + Math.random() * 12, 0.12, 'triangle', 0.25, 30);
+  },
   crash: () => {
     noise(0.5, 0.7, 2500, 80);
     tone(90, 0.4, 'sawtooth', 0.4, 40);
