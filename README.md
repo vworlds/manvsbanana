@@ -5,6 +5,7 @@ A satire game based on the short in `video/`. The hero is drawn after `video/man
 ```
 npm install
 npm run dev      # play at the printed localhost URL
+npm run dev:lan  # also serve on your network (0.0.0.0): open the printed Network URL on your phone
 npm test         # logic tests (ripeness timer, pleading)
 npm run build    # typecheck + production build in dist/
 npm run art      # regenerate the SVG art in public/assets from scripts/gen-art.mjs
