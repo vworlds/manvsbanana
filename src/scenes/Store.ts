@@ -5,8 +5,7 @@ import { caption } from '../fx/Bubble';
 import { TALK } from '../fonts';
 import { drawStore, randomStore, videoStore } from '../art/store';
 import { homeDistance } from '../logic/trip';
-import { loadRecent, pickFresh, rememberLines } from '../logic/plead';
-import { STORE_NAMES } from '../logic/texts';
+import { homeLine } from '../logic/lines';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP, wait } from './common';
 
@@ -57,9 +56,7 @@ export class Store extends Phaser.Scene {
     let style;
     if (state.storeVisits === 0) style = videoStore();
     else {
-      const name = pickFresh(STORE_NAMES, Math.random, loadRecent());
-      rememberLines([name]);
-      style = randomStore(name);
+      style = randomStore(homeLine('store_names'));
     }
     state.storeVisits += 1;
     drawStore(this, style);

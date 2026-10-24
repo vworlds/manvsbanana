@@ -3,6 +3,7 @@ import { Person } from '../art/Person';
 import { makeCar } from '../art/car';
 import { tweenP, wait } from './common';
 import { debug } from '../state/GameState';
+import { homeLine } from '../logic/lines';
 import { bubble, bubbleSize, type BubbleOpts } from '../fx/Bubble';
 import { speak } from '../audio/sfx';
 import { sfx } from '../audio/sfx';
@@ -143,6 +144,7 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     impact();
     const junk = keep(scene.add.particles(900, 560, 'dot', { speed: { min: 150, max: 380 }, angle: { min: 200, max: 330 }, gravityY: 800, lifespan: 1000, tint: [0x8b93a1, 0x6b8e23, 0xe7cf6a, 0xffffff], scale: { start: 1.2, end: 0.6 }, emitting: false }));
     junk.explode(26);
+    say(760, 420, homeLine('park_trash'));
     await tweenP(scene, { targets: trash, x: 1240, y: 380, angle: 420, duration: 480, ease: 'Quad.out' });
   } else if (which === 'lady') {
     const lady = keep(scene.add.image(770, 606, 'old_lady').setOrigin(0.5, 1).setScale(0.75));
@@ -151,7 +153,7 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     await tweenP(scene, { targets: car.root, x: 770 - HALF + 10, duration: 620, ease: 'Quad.out' });
     impact();
     scene.tweens.killTweensOf(lady);
-    say(820, 330, 'MY HIP!');
+    say(820, 330, homeLine('park_lady'));
     await tweenP(scene, { targets: lady, x: 1250, y: 200, angle: 540, duration: 650, ease: 'Quad.out' });
   } else if (which === 'kid') {
     const rider = keep(scene.add.container(1150, 700).setScale(-0.75, 0.75));
@@ -161,7 +163,7 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     impact();
     scene.tweens.killTweensOf(rider);
     const [bike, kid] = rider.list as Phaser.GameObjects.Image[];
-    say(760, 330, 'MY BIKE!');
+    say(760, 330, homeLine('park_kid'));
     scene.tweens.add({ targets: kid, y: -520, x: -200, angle: 400, duration: 700, ease: 'Quad.out' });
     await tweenP(scene, { targets: bike, x: -380, y: -60, angle: -300, duration: 650, ease: 'Quad.out' });
   } else if (which === 'tree') {
@@ -172,6 +174,7 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     scene.tweens.add({ targets: tree, angle: { from: -5, to: 5 }, duration: 70, yoyo: true, repeat: 5, onComplete: () => tree.setAngle(0) });
     const leaves = keep(scene.add.particles(1030, 380, 'dot', { x: { min: -90, max: 90 }, speedY: { min: 40, max: 140 }, speedX: { min: -40, max: 40 }, gravityY: 120, lifespan: 1600, tint: [0x3e9b4a, 0x2c7a37, 0x8bc34a], scale: { start: 0.9, end: 0.5 }, emitting: false }));
     leaves.explode(30);
+    say(820, 420, homeLine('park_tree'));
     await wait(scene, 450);
   } else {
     // rear-ends the neighbour's parked car: car alarm
@@ -179,7 +182,7 @@ export async function crashPark(scene: Phaser.Scene, stage: string, which: ParkC
     impact();
     scene.tweens.add({ targets: parked, x: parked.x + 45, duration: 160, ease: 'Quad.out' });
     sfx.alarm();
-    const wee = say(1150, 470, 'WEE-OO WEE-OO', 1300);
+    const wee = say(1150, 470, homeLine('park_alarm'), 1300);
     scene.tweens.add({ targets: wee, angle: { from: -4, to: 4 }, duration: 120, yoyo: true, repeat: 5 });
     await wait(scene, 450);
   }

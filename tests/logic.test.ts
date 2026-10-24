@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { crash, freshen, isRotten, rate, stageOf, tick, BASE_LIFETIME } from '../src/logic/ripeness';
 import { lightAt, lightPlan, pickCorridor, planEvents, rowGap, rowLanes, ROW_GAP_MIN, crowdSize } from '../src/logic/traffic';
-import { DAD_REPLY, STORE_NAMES, WIFE_TEXTS } from '../src/logic/texts';
+import { DAD_REPLY, WIFE_TEXTS } from '../src/logic/texts';
+import home from '../src/logic/lines/home.json';
 import { BRAKE_SPEED, homeDistance, simulate, stepGauge, TURBO, type Gauge } from '../src/logic/trip';
-import { MEMBERS, TONES, dealRound, familyOrder, pickFresh, redeemed, resultOf, startingRespect, threshold } from '../src/logic/plead';
+import { MEMBERS, TONES, dealRound, familyOrder, redeemed, resultOf, startingRespect, threshold } from '../src/logic/plead';
 
 const base = { trip: 1, generation: 1, turbo: false, chilled: false };
 
@@ -46,7 +47,7 @@ describe('plead', () => {
     return () => v[i++ % v.length];
   };
 
-  it('the pool is big: every member has 12+ lines per tone, 6 moods, 3 hints each', () => {
+  it('the pool is big: every member has 12+ lines per tone, 6 moods with 3+ hints each', () => {
     for (const m of MEMBERS) {
       for (const t of TONES) expect(m.lines[t].length).toBeGreaterThanOrEqual(12);
       expect(m.moods.length).toBeGreaterThanOrEqual(6);
@@ -78,14 +79,6 @@ describe('plead', () => {
     const seen = new Set<string>();
     for (let i = 0; i < 30; i++) seen.add(dealRound(MEMBERS[0]).choices.map((c) => c.line).sort().join('|'));
     expect(seen.size).toBeGreaterThan(25);
-  });
-
-  it('recently shown lines are avoided while fresh ones remain', () => {
-    const wife = MEMBERS[0];
-    const recent = new Set(wife.lines.sweet.slice(0, 11));
-    for (let i = 0; i < 20; i++) expect(pickFresh(wife.lines.sweet, Math.random, recent)).toBe(wife.lines.sweet[11]);
-    // everything recent: still returns something
-    expect(wife.lines.sweet).toContain(pickFresh(wife.lines.sweet, Math.random, new Set(wife.lines.sweet)));
   });
 
   it('family order is a permutation', () => {
@@ -236,6 +229,7 @@ describe('texts', () => {
     expect(WIFE_TEXTS.length).toBeGreaterThanOrEqual(30);
     expect(new Set(WIFE_TEXTS).size).toBe(WIFE_TEXTS.length);
     expect(DAD_REPLY).toBe('🍌🍌🍌!!FUCK!!!');
-    expect(new Set(STORE_NAMES).size).toBeGreaterThanOrEqual(25);
+    expect(new Set(home.store_names).size).toBeGreaterThanOrEqual(25);
+    expect(home.store_names).not.toContain('GROCERY MART'); // reserved for the first store
   });
 });

@@ -5,6 +5,7 @@
 // threshold and you're sent back to the store. The threshold climbs with
 // every redemption.
 
+import { deal } from './deck';
 import { MEMBER_DEFS, type MemberDef, type MoodDef } from './pleadLines';
 
 export type MemberId = 'wife' | 'kid' | 'baby';
@@ -31,13 +32,6 @@ export const MEMBERS = MEMBER_DEFS;
 
 type Rand = () => number;
 
-/** Picks a random item, preferring ones not in `recent`. */
-export function pickFresh<T extends string>(pool: readonly T[], rand: Rand, recent?: Set<string>): T {
-  const fresh = recent ? pool.filter((p) => !recent.has(p)) : pool;
-  const from = fresh.length ? fresh : pool;
-  return from[Math.floor(rand() * from.length) % from.length];
-}
-
 export function shuffle<T>(arr: readonly T[], rand: Rand): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -47,15 +41,24 @@ export function shuffle<T>(arr: readonly T[], rand: Rand): T[] {
   return a;
 }
 
-/** Deals one round: a mood, its hint and four lines (one per tone, shuffled). */
-export function dealRound(member: Member, rand: Rand = Math.random, recent?: Set<string>): Round {
+/**
+ * Deals one round: a mood, its hint and four lines (one per tone, shuffled).
+ * Hints and lines come from no-repeat decks, so nothing is said twice until
+ * its whole pool has been used.
+ */
+export function dealRound(member: Member, rand: Rand = Math.random): Round {
   const mood = member.moods[Math.floor(rand() * member.moods.length) % member.moods.length];
-  const hint = pickFresh(mood.hints, rand, recent);
+  const hint = deal(`plead.${member.id}.hint.${mood.id}`, mood.hints, rand);
   const choices = shuffle(
-    TONES.map((tone) => ({ tone, line: pickFresh(member.lines[tone], rand, recent) })),
+    TONES.map((tone) => ({ tone, line: deal(`plead.${member.id}.${tone}`, member.lines[tone], rand) })),
     rand,
   );
   return { member, mood, hint, choices };
+}
+
+/** A family member's reaction line. */
+export function reaction(member: Member, res: Result): string {
+  return deal(`plead.${member.id}.react.${res}`, member.reactions[res]);
 }
 
 /** The family members in a random order for this game. */
@@ -86,28 +89,4 @@ export function score(mood: Mood, tone: Tone): number {
 
 export function redeemed(respect: number, redemptionsUsed: number): boolean {
   return respect >= threshold(redemptionsUsed);
-}
-
-// ------------------------------------------------------------- memory
-// Lines shown recently are remembered across games so the next game feels new.
-
-const RECENT_KEY = 'man-vs-banana-recent-lines';
-const RECENT_MAX = 120;
-
-export function loadRecent(): Set<string> {
-  try {
-    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');
-    return new Set(Array.isArray(v) ? v : []);
-  } catch {
-    return new Set();
-  }
-}
-
-export function rememberLines(lines: string[]) {
-  try {
-    const prev = [...loadRecent()].filter((l) => !lines.includes(l));
-    localStorage.setItem(RECENT_KEY, JSON.stringify([...prev, ...lines].slice(-RECENT_MAX)));
-  } catch {
-    /* storage unavailable */
-  }
 }

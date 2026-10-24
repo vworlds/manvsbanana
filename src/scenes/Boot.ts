@@ -13,7 +13,7 @@ const PLAIN = [
   'ped_0', 'ped_1', 'ped_2', 'ped_3', 'ped_4', 'ped_5',
   'banana_green', 'banana_yellow', 'banana_spotty', 'banana_brown',
   'bag', 'ice', 'chant', 'yield', 'light', 'trash', 'fly', 'phone', 'keys', 'splat', 'clock',
-  'wheel', 'nitro', 'puff', 'house', 'car_police', 'signal', 'cone', 'barrier', 'stopline',
+  'wheel', 'nitro', 'coffee', 'puff', 'house', 'car_police', 'signal', 'cone', 'barrier', 'stopline',
   'burst_yellow', 'burst_blue', 'skyline', 'trees', 'street', 'room', 'table',
   'car_parked', 'tree', 'old_lady', 'bike', 'kid_rider', 'pillar', 'hedge',
 ];

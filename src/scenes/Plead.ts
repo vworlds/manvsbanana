@@ -2,8 +2,9 @@ import Phaser from 'phaser';
 import type { Eyes, Mouth } from '../art/Person';
 import { music, sfx } from '../audio/sfx';
 import { SHOUT, TALK } from '../fonts';
-import { dealRound, familyOrder, loadRecent, pickFresh, redeemed, rememberLines, resultOf, score, startingRespect, threshold, type Choice, type Member, type Mood, type Result, type Tone } from '../logic/plead';
+import { dealRound, familyOrder, reaction, redeemed, resultOf, score, startingRespect, threshold, type Choice, type Member, type Mood, type Result, type Tone } from '../logic/plead';
 import { EMERGENCY, ENTRANCE, PARDON, PROMISE } from '../logic/pleadLines';
+import { lineFrom } from '../logic/lines';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP, wait } from './common';
 import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, type Room } from './room';
@@ -29,9 +30,6 @@ const ICON: Record<Result, [string, string]> = { great: ['♥', '#E8457A'], ok: 
 export class Plead extends Phaser.Scene {
   private r!: Room;
   private alive = true;
-  /** Lines shown recently (this game and previous ones) so we avoid repeats. */
-  private recent = new Set<string>();
-  private shown: string[] = [];
 
   constructor() {
     super('Plead');
@@ -40,23 +38,11 @@ export class Plead extends Phaser.Scene {
   create() {
     commonKeys(this);
     this.alive = true;
-    this.events.once('shutdown', () => {
-      this.alive = false;
-      rememberLines(this.shown);
-    });
+    this.events.once('shutdown', () => (this.alive = false));
     music('none');
-    this.recent = loadRecent();
-    this.shown = [];
     void this.run();
   }
 
-  /** Pick a line from a pool, avoiding recent ones, and remember it. */
-  private line(pool: readonly string[]) {
-    const l = pickFresh(pool, Math.random, this.recent);
-    this.recent.add(l);
-    this.shown.push(l);
-    return l;
-  }
 
   private w(ms: number) {
     return wait(this, ms);
@@ -76,7 +62,7 @@ export class Plead extends Phaser.Scene {
     // He storms in.
     await tweenP(this, { targets: r.dad, x: SPOTS.dad.x, duration: 260, ease: 'Quad.out' });
     r.dad.setFace('wide', 'open').setPose('up').shout(600);
-    sayAt(this, r, 'man', r.dad, this.line(ENTRANCE), { ms: 1300 });
+    sayAt(this, r, 'man', r.dad, lineFrom('plead.entrance', ENTRANCE), { ms: 1300 });
     await this.w(1300);
 
     // Bag slam.
@@ -91,7 +77,7 @@ export class Plead extends Phaser.Scene {
 
     cut(this, SPOTS.dad.x + 40, SPOTS.dad.y + 30, 1.7);
     r.dad.setFace('angry', 'open').shout(1600);
-    sayAt(this, r, 'man', r.dad, this.line(EMERGENCY), { ms: 2200, dy: 150, size: 30 });
+    sayAt(this, r, 'man', r.dad, lineFrom('plead.emergency', EMERGENCY), { ms: 2200, dy: 150, size: 30 });
     await this.w(2300);
 
     // The stare.
@@ -130,10 +116,10 @@ export class Plead extends Phaser.Scene {
 
     if (ok) {
       r.wife.setFace('shut', 'flat');
-      sayAt(this, r, 'wife', r.wife, this.line(PARDON), { ms: 2000 });
+      sayAt(this, r, 'wife', r.wife, lineFrom('plead.pardon', PARDON), { ms: 2000 });
       await this.w(2100);
       r.dad.setFace('wide', 'open').setPose('up').shout(800);
-      sayAt(this, r, 'man', r.dad, this.line(PROMISE), { ms: 1300 });
+      sayAt(this, r, 'man', r.dad, lineFrom('plead.promise', PROMISE), { ms: 1300 });
       await this.w(1300);
       await tweenP(this, { targets: r.dad, x: -250, duration: 300, ease: 'Quad.in' });
       state.redemptions += 1;
@@ -151,12 +137,8 @@ export class Plead extends Phaser.Scene {
   /** One family member: hint, choose a line, they react. Returns the respect gained. */
   private async round(m: Member): Promise<number> {
     const r = this.r;
-    const round = dealRound(m, Math.random, this.recent);
+    const round = dealRound(m);
     const mood: Mood = round.mood;
-    for (const l of [round.hint, ...round.choices.map((c) => c.line)]) {
-      this.recent.add(l);
-      this.shown.push(l);
-    }
     const target = m.id === 'baby' ? { x: r.baby.x, y: r.baby.y - 10 } : m.id === 'kid' ? r.kid : r.wife;
 
     // Close-up on them with their hint line.
@@ -192,7 +174,7 @@ export class Plead extends Phaser.Scene {
       const [e, mo] = REACT_FACE[m.id][res];
       (m.id === 'kid' ? r.kid : r.wife).setFace(e, mo);
     }
-    sayAt(this, r, m.id === 'baby' ? 'baby' : m.id, target, this.line(m.reactions[res]), { ms: 1500, dy: m.id === 'baby' ? 130 : 160 });
+    sayAt(this, r, m.id === 'baby' ? 'baby' : m.id, target, reaction(m, res), { ms: 1500, dy: m.id === 'baby' ? 130 : 160 });
     const [icon, col] = ICON[res];
     const ic = this.add.text(target.x + 90, target.y - 120, icon, { fontFamily: SHOUT, fontSize: '64px', color: col, stroke: '#141414', strokeThickness: 6 }).setOrigin(0.5);
     r.world.add(ic);

@@ -24,6 +24,7 @@ import {
 } from '../logic/traffic';
 import { baseSpeed, BRAKE_SPEED, homeDistance, PX_PER_M, stepGauge, TURBO, TURBO_SPEED, type Gauge } from '../logic/trip';
 import { debug, state } from '../state/GameState';
+import { driveLine, homeLine } from '../logic/lines';
 import { commonKeys } from './common';
 
 const W = 1280;
@@ -38,7 +39,7 @@ const SPAWN_X = W + 160;
 /** The wife doesn't text once the bananas are nearly brown: the brown cut-in would bury her message. */
 const PHONE_MAX_RIPENESS = 0.76;
 
-type Kind = 'car' | 'police' | 'ped' | 'ice' | 'fresh' | 'chant' | 'nitro' | 'decor' | 'works' | 'light';
+type Kind = 'car' | 'police' | 'ped' | 'ice' | 'fresh' | 'chant' | 'nitro' | 'coffee' | 'decor' | 'works' | 'light';
 type Obj = Phaser.GameObjects.Components.Transform & Phaser.GameObjects.GameObject & { setDepth(d: number): unknown };
 
 interface Thing {
@@ -73,21 +74,8 @@ interface Police {
   marker: Phaser.GameObjects.Text;
 }
 
-const CRASH_LINES = ['FUCK!', 'SHIT SHIT SHIT!', 'MOVE, ASSHOLE!', 'GODDAMN IT!', 'OUT OF MY WAY!', 'COME ON COME ON COME ON!', 'LEARN TO DRIVE, DICKHEAD!'];
-const PED_LINES = ['YIELD MY ASS!', 'SORRY! BANANA EMERGENCY!', 'GET OFF THE ROAD!', 'I GOT BANANAS HERE!'];
-const IDLE_LINES = [
-  'I GOTTA GET THESE BANANAS HOME!',
-  'COME ON COME ON, I GOT BANANAS HERE!',
-  "DON'T TURN YELLOW. DON'T TURN YELLOW.",
-  "Breathe. They're just bananas.",
-  "THEY'RE NOT JUST BANANAS!",
-  "Hold on, babies. Daddy's coming.",
-  'Why is every light red? WHY?',
-];
-const PICKUP_TEXT: Record<string, string> = { ice: 'CHILLED!', fresh: 'FRESH BUNCH!', chant: "DON'T TURN YELLOW!", nitro: 'TURBO REFILL!' };
-const HOME_LINES = ['I CAN SEE THE HOUSE!', 'ALMOST THERE, BABIES!', 'HOME STRETCH! HOME STRETCH!', "HOLD ON, BANANAS! WE'RE CLOSE!"];
+const PICKUP_TEXT: Record<string, string> = { ice: 'CHILLED!', fresh: 'FRESH BUNCH!', chant: "DON'T TURN YELLOW!", nitro: 'TURBO REFILL!', coffee: 'COFFEE!' };
 const pick = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
-const NEIGHBORHOODS = ['MAPLE GROVE', 'SUNNY ACRES', 'PLEASANT HILLS', 'WILLOW CREEK', 'OAKWOOD ESTATES', 'QUIET PINES', 'CUL-DE-SAC CITY', 'MEADOW BROOK'];
 
 export class Drive extends Phaser.Scene {
   private things: Thing[] = [];
@@ -222,11 +210,11 @@ export class Drive extends Phaser.Scene {
     const onReply = () => {
       this.boost = 2.5;
       sfx.send();
-      this.say('Sent. Now GO!', 'angry', 'grit');
+      this.say(driveLine('phone_reply'), 'angry', 'grit');
     };
     const onIgnore = () => {
       state.ignoredTexts += 1;
-      this.say("Shit. She's gonna kill me.", 'worried', 'frown');
+      this.say(driveLine('phone_ignored'), 'worried', 'frown');
     };
     bus.on('drive:phone-reply', onReply);
     bus.on('drive:phone-ignored', onIgnore);
@@ -244,12 +232,12 @@ export class Drive extends Phaser.Scene {
     const smug = mode === 'new' && state.generation > 1;
     const line =
       mode === 'redeemed'
-        ? 'I WILL NOT FAIL YOU AGAIN, BANANAS!'
+        ? driveLine('start_redeemed')
         : mode === 'delivery'
-          ? pick(['MORE?! FINE! MORE BANANAS!', 'THEY WANT MORE. OF COURSE THEY WANT MORE.', 'ONE MORE RUN. FOR RESPECT. FOR NOTHING.'])
+          ? driveLine('start_delivery')
           : smug
-            ? 'Ha. I will NEVER end up like Dad.'
-            : 'FUCK FUCK FUCK FUCK! I GOTTA GET THESE BANANAS HOME BEFORE THEY GO BAD!';
+            ? driveLine('start_new_son')
+            : driveLine('start_new');
     this.time.delayedCall(350, () => this.cutIn(line, smug ? 'smug' : 'worried', smug ? 'smirk' : 'grit', 1500));
   }
 
@@ -382,11 +370,11 @@ export class Drive extends Phaser.Scene {
       anchor.plan = lightPlan((x - 10 - (CAR_X + CAR_HALF)) / v);
       anchor.clock = 0;
       anchor.light = 'green';
-      this.time.delayedCall(300, () => this.say(pick(['A LIGHT. OF COURSE THERE IS A LIGHT.', 'Make it... make it... MAKE IT!', "Don't you DARE turn red."]), 'wide', 'grit'));
+      this.time.delayedCall(300, () => this.say(driveLine('crossroad_seen'), 'wide', 'grit'));
     } else {
       c.add(this.add.image(walkX, ROAD_TOP + 4, 'crosswalk').setOrigin(0.5, 0));
       c.add(this.add.image(90, ROAD_TOP + 2, 'yield').setOrigin(0.5, 1).setScale(0.6));
-      if (Math.random() < 0.6) this.time.delayedCall(500, () => this.say(pick(['YIELD TO WHAT?!', 'Oh come ON. Pedestrians?', 'WALK FASTER!']), 'angry', 'grit'));
+      if (Math.random() < 0.6) this.time.delayedCall(500, () => this.say(driveLine('crosswalk_seen'), 'angry', 'grit'));
     }
     this.things.push(anchor);
     this.eventAnchor = anchor;
@@ -419,7 +407,7 @@ export class Drive extends Phaser.Scene {
     this.things.push(thing);
     this.works = { lane, corridor, thing };
     this.eventAnchor = thing;
-    this.time.delayedCall(300, () => this.say(pick(['ROADWORKS?! NOW?!', 'Who schedules roadworks at banana hour?!', 'CONES. FUCKING CONES.']), 'angry', 'open'));
+    this.time.delayedCall(300, () => this.say(driveLine('works_seen'), 'angry', 'open'));
   }
 
   private spawnPickup() {
@@ -430,9 +418,11 @@ export class Drive extends Phaser.Scene {
     const lane = pick(lanes);
     const r = Math.random();
     const nitroChance = this.gauge.level < 0.4 ? 0.4 : 0.2;
-    const kind: Kind = r < nitroChance ? 'nitro' : r < nitroChance + 0.3 ? 'ice' : r < nitroChance + 0.6 ? 'fresh' : 'chant';
+    // speed pickups are an energy drink or a coffee
+    const speedKind: Kind = Math.random() < 0.5 ? 'nitro' : 'coffee';
+    const kind: Kind = r < nitroChance ? speedKind : r < nitroChance + 0.3 ? 'ice' : r < nitroChance + 0.6 ? 'fresh' : 'chant';
     const key = kind === 'fresh' ? 'banana_green' : kind;
-    const img = this.add.image(W + 100, GROUND(lane) - 40, key).setScale(kind === 'fresh' ? 0.45 : kind === 'chant' ? 0.85 : kind === 'nitro' ? 0.55 : 0.6);
+    const img = this.add.image(W + 100, GROUND(lane) - 40, key).setScale(kind === 'fresh' ? 0.45 : kind === 'chant' ? 0.85 : kind === 'nitro' || kind === 'coffee' ? 0.55 : 0.6);
     this.tweens.add({ targets: img, y: img.y - 12, duration: 300, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.things.push({ kind, obj: img, lane, own: 0, vy: 0, hit: false });
   }
@@ -497,7 +487,7 @@ export class Drive extends Phaser.Scene {
       p.chaseTime += dt;
       if (p.chaseTime > 12) {
         p.mode = 'leave';
-        this.say(pick(['Ha! They gave up!', 'Too much traffic for you, officer?']), 'smug', 'smirk');
+        this.say(driveLine('cops_gave_up'), 'smug', 'smirk');
       }
     }
     // off-screen behind you: it keeps up, unless you're outrunning it on turbo
@@ -509,7 +499,7 @@ export class Drive extends Phaser.Scene {
     if (p.mode === 'chase' && t.obj.x > CAR_X + 260) {
       p.mode = 'block';
       p.laneTimer = 0.6;
-      this.say(pick(['Oh, you have GOT to be kidding me.', 'PULL OVER? I HAVE BANANAS!', 'Officer, please, the bananas!']), 'worried', 'grit');
+      this.say(driveLine('cops_block'), 'worried', 'grit');
     }
     if (p.mode === 'block' && t.obj.x < CAR_X - 230) {
       p.passes += 1;
@@ -517,7 +507,7 @@ export class Drive extends Phaser.Scene {
       p.chaseTime = 0;
     }
     if (t.obj.x < -300) {
-      if (p.mode === 'chase') this.say(pick(['LOST THEM! HA!', 'EAT MY BANANA DUST!', 'Bye, officer!']), 'wide', 'smile');
+      if (p.mode === 'chase') this.say(driveLine('cops_lost'), 'wide', 'smile');
       this.removePolice();
     }
   }
@@ -549,7 +539,7 @@ export class Drive extends Phaser.Scene {
     const o = p.thing.obj;
     this.tweens.add({ targets: o, x: o.x + 400, y: ROAD_BOT + 120, angle: 160, alpha: 0, duration: 700, ease: 'Quad.out', onComplete: () => o.destroy() });
     this.police = null;
-    this.say(pick(['SORRY OFFICER! BANANA EMERGENCY!', 'Oops. That was a cop.', "I DIDN'T SEE YOU! I SAW YOU!"]), 'wide', 'open');
+    this.say(driveLine('cops_bump'), 'wide', 'open');
   }
 
   // ------------------------------------------------------------- loop
@@ -565,7 +555,7 @@ export class Drive extends Phaser.Scene {
     const turbo = stepGauge(this.gauge, holding, dt, braking);
     if (holding && this.gauge.empty && !this.wasEmpty) {
       sfx.honk();
-      this.say(pick(['OUT OF TURBO! SHIT!', 'COME ON, CAR! COME ON!', 'Why did I buy a sedan?!']), 'worried', 'grit');
+      this.say(driveLine('turbo_empty'), 'worried', 'grit');
     }
     this.wasEmpty = this.gauge.empty;
     this.recover = Math.min(1, this.recover + dt * 0.8);
@@ -608,7 +598,7 @@ export class Drive extends Phaser.Scene {
     if (this.junction) this.turnOffTraffic();
     if (!this.homeLineSaid && left < this.home * 0.25) {
       this.homeLineSaid = true;
-      this.say(pick(HOME_LINES), 'wide', 'open');
+      this.say(driveLine('home_close'), 'wide', 'open');
     }
 
     // background
@@ -657,7 +647,7 @@ export class Drive extends Phaser.Scene {
     }
     this.maybePhone(left);
     if (this.nextIdleLine <= 0) {
-      const l = pick(IDLE_LINES);
+      const l = driveLine('idle');
       this.say(l, l === l.toUpperCase() ? 'angry' : 'worried', l === l.toUpperCase() ? 'open' : 'grit');
       this.nextIdleLine = 6 + Math.random() * 5;
     }
@@ -730,17 +720,17 @@ export class Drive extends Phaser.Scene {
     if (!t.passed && t.obj.x - 10 <= CAR_X + CAR_HALF) {
       t.passed = true;
       if (l === 'red') this.ranRed();
-      else if (this.mult > 1.2) this.say(pick(['MADE IT! HA HA!', 'YELLOW MEANS FASTER!', 'GREEN! GREEN! GO!']), 'wide', 'smile');
+      else if (this.mult > 1.2) this.say(driveLine('light_made_it'), 'wide', 'smile');
     }
   }
 
   private ranRed() {
     sfx.honk();
-    this.say(pick(['Was that red? That was red.', 'Oh shit. Oh shit.', 'Technically it was orange.']), 'wide', 'grit');
+    this.say(driveLine('ran_red'), 'wide', 'grit');
     this.time.delayedCall(900, () => {
       if (this.over) return;
       this.spawnPolice();
-      this.say(pick(['COPS?! NOW?!', 'NO NO NO, NOT THE COPS!', 'I CAN EXPLAIN! I HAVE BANANAS!']), 'wide', 'open');
+      this.say(driveLine('cops_appear'), 'wide', 'open');
     });
   }
 
@@ -765,7 +755,7 @@ export class Drive extends Phaser.Scene {
   }
 
   private collide(t: Thing) {
-    const pickup = t.kind === 'ice' || t.kind === 'fresh' || t.kind === 'chant' || t.kind === 'nitro';
+    const pickup = t.kind === 'ice' || t.kind === 'fresh' || t.kind === 'chant' || t.kind === 'nitro' || t.kind === 'coffee';
     const dx = Math.abs(t.obj.x - CAR_X);
     if (pickup) {
       if (t.lane === this.lane && dx < CAR_HALF) this.collect(t);
@@ -793,7 +783,7 @@ export class Drive extends Phaser.Scene {
     sfx.crash();
     this.cameras.main.shake(240, 0.012);
     this.pop(CAR_X, this.car.y - 120, 'CONES!', '#FF7A1A');
-    this.say(pick(['FUCKING CONES!', 'WHO PUTS A HOLE IN A ROAD?!', 'MY BANANAS!']), 'angry', 'open');
+    this.say(driveLine('cones'), 'angry', 'open');
   }
 
   private crashInto(t: Thing) {
@@ -808,7 +798,7 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setScale(0.46);
     this.tweens.add({ targets: this.carBananas, scale: 0.4, duration: 300 });
     this.pop(CAR_X, this.car.y - 120, 'BRUISED!', '#D3202A');
-    this.say(pick(CRASH_LINES), 'angry', 'open');
+    this.say(driveLine('crash'), 'angry', 'open');
   }
 
   private hitPed(t: Thing) {
@@ -822,7 +812,7 @@ export class Drive extends Phaser.Scene {
     this.tweens.killTweensOf(t.obj);
     this.tweens.add({ targets: t.obj, x: t.obj.x + 700, y: t.obj.y - 420, angle: 900, duration: 900, ease: 'Quad.out' });
     this.pop(t.obj.x, t.obj.y - 140, 'AAAAH!', '#141414');
-    this.say(pick(PED_LINES), 'wide', 'open');
+    this.say(driveLine('ped'), 'wide', 'open');
   }
 
   private collect(t: Thing) {
@@ -831,7 +821,8 @@ export class Drive extends Phaser.Scene {
     this.tweens.killTweensOf(t.obj);
     this.tweens.add({ targets: t.obj, scale: 1.2, alpha: 0, y: t.obj.y - 60, duration: 300, onComplete: () => t.obj.destroy() });
     if (t.kind === 'ice') this.chilled = 6;
-    if (t.kind === 'nitro') {
+    if (t.kind === 'ice' || t.kind === 'fresh' || t.kind === 'nitro' || t.kind === 'coffee') this.say(driveLine(t.kind), 'wide', 'smile');
+    if (t.kind === 'nitro' || t.kind === 'coffee') {
       this.gauge.level = Math.min(1, this.gauge.level + TURBO.pickup);
       this.gauge.empty = false;
     }
@@ -839,7 +830,7 @@ export class Drive extends Phaser.Scene {
     if (t.kind === 'chant') {
       this.ripeness = freshen(this.ripeness, 0.05);
       this.invuln = 3;
-      this.say("DON'T TURN YELLOW DON'T TURN YELLOW DON'T TURN YELLOW", 'shut', 'open', 1800);
+      this.say(driveLine('chant'), 'shut', 'open', 1800);
     }
     this.pop(CAR_X + 40, this.car.y - 130, PICKUP_TEXT[t.kind], '#2EAA3A');
   }
@@ -859,9 +850,9 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setTexture(`banana_${st}`);
     bus.emit('hud:stage', st);
     if (!worse) return;
-    if (st === 'yellow') this.cutIn("DON'T TURN YELLOW DON'T TURN YELLOW!", 'wide', 'open');
-    if (st === 'spotty') this.cutIn('NO NO NO NO! NOT THE SPOTS!', 'angry', 'open');
-    if (st === 'brown') this.cutIn("THEY'RE GOING BROWN! FUUUUCK!", 'crying', 'wail');
+    if (st === 'yellow') this.cutIn(driveLine('stage_yellow'), 'wide', 'open');
+    if (st === 'spotty') this.cutIn(driveLine('stage_spotty'), 'angry', 'open');
+    if (st === 'brown') this.cutIn(driveLine('stage_brown'), 'crying', 'wail');
   }
 
   /**
@@ -914,7 +905,7 @@ export class Drive extends Phaser.Scene {
     // entrance pillars and the neighbourhood sign
     c.add(this.add.image(20, midTop - 4, 'pillar').setOrigin(0.5, 1).setScale(0.7));
     c.add(this.add.image(20, midBot + 40, 'pillar').setOrigin(0.5, 1).setScale(0.8));
-    const name = pick(NEIGHBORHOODS);
+    const name = homeLine('neighborhoods');
     const board = this.add.rectangle(20, midTop - 175, 230, 50, 0x5e3a1e).setStrokeStyle(5, 0x141414);
     const label = this.add.text(20, midTop - 175, name, { fontFamily: 'Georgia, serif', fontStyle: 'bold', fontSize: '24px', color: '#F7E7B0' }).setOrigin(0.5);
     if (label.width > 210) label.setScale(210 / label.width);
@@ -958,7 +949,7 @@ export class Drive extends Phaser.Scene {
     };
     steer();
     this.time.delayedCall(300, steer);
-    this.say(pick(['Blinker on. Like a civilised man.', 'Home. HOME. Middle lane, middle lane...', 'Welcome home, bananas.']), 'wide', 'smile');
+    this.say(driveLine('autopilot'), 'wide', 'smile');
   }
 
   /** Traffic that reaches the junction turns off into the cross street. */
@@ -992,7 +983,7 @@ export class Drive extends Phaser.Scene {
     this.tweens.add({ targets: this.car, x: this.car.x + 380, duration: 1300, ease: 'Sine.out' });
     sfx.screech();
     this.driver.setFace('wide', 'smile');
-    bus.emit('hud:cutin', { text: pick(['I MADE IT! I FUCKING MADE IT!', 'HOME! HOME! THE BANANAS LIVE!', "WHO'S THE MAN?! I'M THE MAN!"]), eyes: 'wide', mouth: 'open', ms: 1300, stage: this.stage });
+    bus.emit('hud:cutin', { text: driveLine('arrive'), eyes: 'wide', mouth: 'open', ms: 1300, stage: this.stage });
     speak('I made it!');
     this.registry.set('arrivalStage', this.stage);
     this.time.delayedCall(1400, () => {
@@ -1010,8 +1001,9 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setTexture('banana_brown');
     this.driver.setFace('crying', 'wail');
     sfx.sad();
-    bus.emit('hud:cutin', { text: 'NOOOOOOOOOOO!', eyes: 'crying', mouth: 'wail', ms: 1600, stage: 'brown' });
-    speak('NOOOOOOOOO!');
+    const nooo = driveLine('rotten');
+    bus.emit('hud:cutin', { text: nooo, eyes: 'crying', mouth: 'wail', ms: 1600, stage: 'brown' });
+    speak(nooo);
     this.time.delayedCall(1700, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {

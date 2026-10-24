@@ -6,9 +6,9 @@ import { SHOUT, TALK } from '../fonts';
 import { STAGE_START, type Stage } from '../logic/ripeness';
 import { state } from '../state/GameState';
 import { bubble } from '../fx/Bubble';
+import { lineFrom } from '../logic/lines';
 import { DAD_OPENER, DAD_REPLY, WIFE_GIVE_UP, WIFE_NAGS, WIFE_TEXTS } from '../logic/texts';
 
-const pick = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
 
 const W = 1280;
 const H = 720;
@@ -183,7 +183,7 @@ export class Hud extends Phaser.Scene {
       return t;
     };
     msg(DAD_OPENER, true);
-    msg(pick(WIFE_TEXTS), false);
+    msg(lineFrom('wife.texts', WIFE_TEXTS), false);
     const hint = this.add
       .text(0, -262, this.sys.game.device.input.touch ? 'TAP PHONE TO REPLY!' : 'ENTER TO REPLY!', { fontFamily: SHOUT, fontSize: '32px', color: '#D3202A', stroke: '#ffffff', strokeThickness: 6 })
       .setOrigin(0.5);
@@ -199,10 +199,10 @@ export class Hud extends Phaser.Scene {
     this.registry.set('phoneHit', (px: number, py: number) => Math.abs(px - c.x) < 150 && py > c.y - 240);
 
     this.phoneTimer = this.time.delayedCall(3200, () => {
-      msg(pick(WIFE_NAGS), false);
+      msg(lineFrom('wife.nags', WIFE_NAGS), false);
       sfx.phone();
       this.phoneTimer = this.time.delayedCall(2200, () => {
-        msg(pick(WIFE_GIVE_UP), false);
+        msg(lineFrom('wife.giveup', WIFE_GIVE_UP), false);
         bus.emit('drive:phone-ignored');
         this.closePhone(700);
       });

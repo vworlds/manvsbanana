@@ -41,10 +41,8 @@ const clip = `<defs><clipPath id="hc"><circle cx="100" cy="100" r="90"/></clipPa
 // sad strands on top, forehead shine.
 const manHair = `
   <g clip-path="url(#hc)" stroke="${HAIR_MAN}" stroke-linecap="round" fill="none">
-    <path d="${arcPath(100, 100, 84, 148, 212)}" stroke-width="22"/>
-    <path d="${arcPath(100, 100, 84, -32, 32)}" stroke-width="22"/>
-    <path d="${arcPath(100, 100, 86, 120, 150)}" stroke-width="12"/>
-    <path d="${arcPath(100, 100, 86, 30, 60)}" stroke-width="12"/>
+    <path d="${arcPath(100, 100, 84, 172, 218)}" stroke-width="22"/>
+    <path d="${arcPath(100, 100, 84, -38, 8)}" stroke-width="22"/>
   </g>
   <g stroke="${HAIR_MAN}" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.55">
     <path d="M80 22 q14 -8 30 2"/><path d="M86 28 q12 -7 26 1"/><path d="M93 19 q9 -5 18 1"/>
@@ -78,8 +76,8 @@ save('stubble', svg(200, 200, `<g fill="#6A5244" opacity="0.38">${stubble}</g>`)
 // Kid: yellow bowl cut.
 const kidHair = `
   <path d="M8 112 C4 40 50 4 100 4 C150 4 196 40 192 112 L172 112 C170 92 168 84 164 80 L36 80 C32 84 30 92 28 112 Z"
-        fill="#F6D70E" stroke="${INK}" stroke-width="${W}" stroke-linejoin="round"/>
-  <path d="M60 80 l6 -14 M100 80 l3 -16 M140 80 l-5 -14" stroke="#C9A800" stroke-width="3" stroke-linecap="round"/>`;
+        fill="${HAIR_MAN}" stroke="${INK}" stroke-width="${W}" stroke-linejoin="round"/>
+  <path d="M60 80 l6 -14 M100 80 l3 -16 M140 80 l-5 -14" stroke="#6E5243" stroke-width="3" stroke-linecap="round"/>`;
 save('kid_head', svg(200, 200, headCircle() + headOutline + kidHair));
 save('kid_hair', svg(200, 200, kidHair));
 save('head_plain', svg(200, 200, headCircle() + headOutline));
@@ -273,6 +271,12 @@ save('hedge', svg(200, 70, `<path d="M6 66 Q0 30 26 26 Q30 4 60 10 Q80 -2 104 12
 save('nitro', svg(80, 120, `<rect x="10" y="12" width="60" height="100" rx="10" fill="#1F8FD6" stroke="${INK}" stroke-width="6"/>
   <rect x="16" y="4" width="48" height="14" rx="5" fill="#C9CCD6" stroke="${INK}" stroke-width="5"/>
   <path d="M46 26 L24 66 L40 66 L32 98 L58 54 L42 54 L52 26 Z" fill="#F7D93A" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`));
+// Coffee pickup: takeaway cup with a lid and steam.
+save('coffee', svg(90, 130, `<path d="M30 22 q-8 -10 0 -18 M48 22 q-8 -10 0 -18 M66 22 q-8 -10 0 -18" stroke="#BBBBBB" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M16 40 L74 40 L66 126 L24 126 Z" fill="#F4F1EA" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="10" y="26" width="70" height="16" rx="6" fill="#5E3A1E" stroke="${INK}" stroke-width="5"/>
+  <path d="M20 70 L70 70 L67 100 L23 100 Z" fill="#8A5A2B" stroke="${INK}" stroke-width="4"/>
+  <text x="45" y="91" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="13" fill="#F7E7B0">JAVA</text>`));
 // Exhaust puff.
 save('puff', svg(40, 40, `<circle cx="20" cy="20" r="16" fill="#D9D9E0" stroke="${INK}" stroke-width="3" opacity="0.9"/>`));
 

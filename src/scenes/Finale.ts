@@ -4,6 +4,7 @@ import { music, sfx, speak } from '../audio/sfx';
 import { caption } from '../fx/Bubble';
 import { SHOUT, TALK } from '../fonts';
 import { state } from '../state/GameState';
+import { homeLine } from '../logic/lines';
 import { commonKeys, tweenP, wait, waitForInput } from './common';
 import { addFlies, buildRoom, cut, H, sayAt, SPOTS, W, type Room } from './room';
 
@@ -43,11 +44,11 @@ export class Finale extends Phaser.Scene {
     const close = () => cut(this, SPOTS.dad.x + 30, SPOTS.dad.y + 40, 1.9);
     close();
     r.dad.setFace('worried', 'frown');
-    sayAt(this, r, 'man', r.dad, 'No.', { ms: 700, dy: 130 });
+    sayAt(this, r, 'man', r.dad, homeLine('dad_no'), { ms: 700, dy: 130 });
     await this.w(900);
     cut(this, SPOTS.dad.x + 30, SPOTS.dad.y + 30, 2.4);
     r.dad.setFace('crying', 'frown');
-    sayAt(this, r, 'man', r.dad, 'No.', { ms: 700, dy: 120 });
+    sayAt(this, r, 'man', r.dad, homeLine('dad_no'), { ms: 700, dy: 120 });
     await this.w(900);
     cut(this, W / 2, H / 2, 1);
     r.dad.setFace('crying', 'wail').setPose('face');
@@ -56,7 +57,7 @@ export class Finale extends Phaser.Scene {
     sfx.sad();
     await this.w(1300);
     close();
-    sayAt(this, r, 'man', r.dad, "I... I tried. Don't you see? I tried so hard.", { ms: 2200, dy: 130 });
+    sayAt(this, r, 'man', r.dad, homeLine('dad_tried'), { ms: 2200, dy: 130 });
     await this.w(2400);
     if (!this.alive) return;
 
@@ -99,7 +100,7 @@ export class Finale extends Phaser.Scene {
     kid.stopIdle();
     cut(this, SPOTS.kid.x, SPOTS.kid.y + 20, 1.6);
     kid.setFace('smug', 'flat');
-    sayAt(this, r, 'kid', kid, 'Father has failed.', { ms: 1500, dy: 130 });
+    sayAt(this, r, 'kid', kid, homeLine('kid_failed'), { ms: 1500, dy: 130 });
     await this.w(1700);
     const burst = (this.burst = this.add.image(SPOTS.kid.x, SPOTS.kid.y, 'burst_yellow').setScale(0.6).setAlpha(0));
     r.world.addAt(burst, 1);
@@ -117,7 +118,7 @@ export class Finale extends Phaser.Scene {
     await this.w(2300);
     this.tweens.add({ targets: iam, alpha: 0, duration: 300 });
     kid.setFace('smug', 'smirk');
-    sayAt(this, r, 'kid', kid, "And I will NEVER end up like him.", { ms: 1800, dy: 130 });
+    sayAt(this, r, 'kid', kid, homeLine('kid_vow'), { ms: 1800, dy: 130 });
     await this.w(2000);
     if (!this.alive) return;
 
@@ -195,11 +196,11 @@ export class Finale extends Phaser.Scene {
     r.world.addAt(son, r.world.list.indexOf(r.table));
     son.setAlpha(0);
     await tweenP(this, { targets: son, alpha: 1, duration: 200 });
-    sayAt(this, r, 'kid', son, 'Bananas are for boomers, Dad.', { ms: 1800, dy: 130 });
+    sayAt(this, r, 'kid', son, homeLine('grandson_jab'), { ms: 1800, dy: 130 });
     await this.w(1900);
     cut(this, W / 2, 330, 1.9);
     kid.setFace('wide', 'o');
-    sayAt(this, r, 'man', kid, '...Oh no.', { ms: 1400, dy: 130 });
+    sayAt(this, r, 'man', kid, homeLine('oh_no'), { ms: 1400, dy: 130 });
     await this.w(1600);
   }
 

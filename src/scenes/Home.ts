@@ -3,8 +3,8 @@ import type { Person } from '../art/Person';
 import { music, sfx } from '../audio/sfx';
 import { caption } from '../fx/Bubble';
 import { TALK } from '../fonts';
-import { pickFresh, loadRecent, rememberLines } from '../logic/plead';
-import { DEMANDS, DISDAIN, ENTRANCE, PROUD, RESIGNED } from '../logic/pleadLines';
+import { ENTRANCE } from '../logic/pleadLines';
+import { homeLine, lineFrom } from '../logic/lines';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP, wait } from './common';
 import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W } from './room';
@@ -15,8 +15,6 @@ import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W } from './room'
  */
 export class Home extends Phaser.Scene {
   private alive = true;
-  private recent = new Set<string>();
-  private shown: string[] = [];
 
   constructor() {
     super('Home');
@@ -25,12 +23,7 @@ export class Home extends Phaser.Scene {
   create() {
     commonKeys(this);
     this.alive = true;
-    this.recent = loadRecent();
-    this.shown = [];
-    this.events.once('shutdown', () => {
-      this.alive = false;
-      rememberLines(this.shown);
-    });
+    this.events.once('shutdown', () => (this.alive = false));
     music('none');
     void this.run();
   }
@@ -39,12 +32,6 @@ export class Home extends Phaser.Scene {
     return wait(this, ms);
   }
 
-  private line(pool: readonly string[]) {
-    const l = pickFresh(pool, Math.random, this.recent);
-    this.recent.add(l);
-    this.shown.push(l);
-    return l;
-  }
 
   private async run() {
     const stage = (this.registry.get('arrivalStage') as string) ?? 'yellow';
@@ -62,7 +49,7 @@ export class Home extends Phaser.Scene {
     // Proud entrance.
     await tweenP(this, { targets: r.dad, x: SPOTS.dad.x, duration: 260, ease: 'Quad.out' });
     r.dad.setFace('wide', 'smile').setPose('up');
-    sayAt(this, r, 'man', r.dad, this.line(ENTRANCE), { ms: 1300 });
+    sayAt(this, r, 'man', r.dad, lineFrom('plead.entrance', ENTRANCE), { ms: 1300 });
     await this.w(1300);
     r.bag.setVisible(true).setY(-200);
     r.bananas.setVisible(true).setY(-400);
@@ -73,7 +60,7 @@ export class Home extends Phaser.Scene {
     if (stage === 'spotty') addFlies(this, r, 2);
     r.dad.setFace('neutral', 'smile').setPose('hips');
     cut(this, SPOTS.dad.x + 40, SPOTS.dad.y + 30, 1.6);
-    sayAt(this, r, 'man', r.dad, this.line(PROUD), { ms: 1700, dy: 150 });
+    sayAt(this, r, 'man', r.dad, homeLine('proud'), { ms: 1700, dy: 150 });
     await this.w(1800);
     if (!this.alive) return;
 
@@ -125,9 +112,9 @@ export class Home extends Phaser.Scene {
     if (!this.alive) return;
 
     // The verdicts.
-    sayAt(this, r, 'wife', r.wife, this.line(DISDAIN.wife), { ms: 1900 });
+    sayAt(this, r, 'wife', r.wife, homeLine('disdain_wife'), { ms: 1900 });
     await this.w(2000);
-    sayAt(this, r, 'kid', r.kid, this.line(DISDAIN.kid), { ms: 1900, dy: 140 });
+    sayAt(this, r, 'kid', r.kid, homeLine('disdain_kid'), { ms: 1900, dy: 140 });
     await this.w(2000);
 
     // The baby throws the peel at him.
@@ -145,11 +132,11 @@ export class Home extends Phaser.Scene {
     await this.w(500);
 
     cut(this, W / 2 + 100, H / 2, 1.05);
-    sayAt(this, r, Math.random() < 0.5 ? 'wife' : 'kid', Math.random() < 0.5 ? r.wife : r.kid, this.line(DEMANDS), { ms: 1700 });
+    sayAt(this, r, Math.random() < 0.5 ? 'wife' : 'kid', Math.random() < 0.5 ? r.wife : r.kid, homeLine('demands'), { ms: 1700 });
     await this.w(1800);
     cut(this, SPOTS.dad.x + 30, SPOTS.dad.y + 30, 1.9);
     r.dad.setFace('worried', 'grit');
-    sayAt(this, r, 'man', r.dad, this.line(RESIGNED), { ms: 1700, dy: 120 });
+    sayAt(this, r, 'man', r.dad, homeLine('resigned'), { ms: 1700, dy: 120 });
     await this.w(1800);
     if (!this.alive) return;
 
