@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { unlock } from './audio/sfx';
+import { audio, unlock } from './audio/sfx';
 import { setupFullscreen } from './fullscreen';
 import { Boot } from './scenes/Boot';
 import { Title } from './scenes/Title';
@@ -18,10 +18,24 @@ async function fontsReady() {
 // Audio can only start after a user gesture: unlock it on the first key or tap anywhere.
 for (const ev of ['pointerdown', 'keydown', 'touchstart'] as const) window.addEventListener(ev, unlock, { once: true, capture: true });
 
-setupFullscreen();
+// Upright phone: the game is covered by "turn your phone sideways", so pause it (and its sound) meanwhile.
+let game: Phaser.Game | null = null;
+let upright = false;
+const pauseFor = (portrait: boolean) => {
+  upright = portrait;
+  if (!game) return;
+  if (portrait) game.pause();
+  else {
+    game.resume();
+    game.scale.refresh(); // the screen turned while paused
+  }
+  const a = audio();
+  if (a) void (portrait ? a.ctx.suspend() : a.ctx.resume()).catch(() => undefined);
+};
+setupFullscreen(pauseFor);
 
 void fontsReady().then(() => {
-  const game = new Phaser.Game({
+  game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
     width: 1280,
@@ -32,4 +46,5 @@ void fontsReady().then(() => {
     scene: [Boot, Title, Drive, Hud, Plead, Home, Store, Finale],
   });
   (window as unknown as { game: Phaser.Game }).game = game;
+  if (upright) game.events.once('ready', () => pauseFor(true));
 });
