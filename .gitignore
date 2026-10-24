@@ -1,0 +1,4 @@
+node_modules
+dist
+# large source video (original cartoon); keep local
+video/*.mkv

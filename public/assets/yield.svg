@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="300" viewBox="0 0 120 300" ><rect x="54" y="90" width="12" height="210" fill="#777" stroke="#141414" stroke-width="4"/>
+  <path d="M8 10 L112 10 L60 100 Z" fill="#fff" stroke="#D3202A" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M8 10 L112 10 L60 100 Z" fill="none" stroke="#141414" stroke-width="3" stroke-linejoin="round"/>
+  <text x="60" y="38" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="18" fill="#D3202A">YIELD</text>
+  <text x="60" y="56" text-anchor="middle" font-family="Arial" font-weight="700" font-size="12" fill="#D3202A">TO</text>
+  <circle cx="60" cy="68" r="6" fill="#333"/><path d="M60 74 L60 84 M54 78 L66 78" stroke="#333" stroke-width="3"/></svg>
