@@ -2,6 +2,12 @@
 
 A satire game based on the short in `video/`. The hero is drawn after `video/man.png`.
 
+**Play:** https://vworlds.github.io/manvsbanana/
+
+**Branches:** work happens on `dev` (the default branch). `master` is the release branch: every push to it runs the
+tests, builds, and publishes the game to GitHub Pages (`.github/workflows/pages.yml`). To release:
+`git push origin dev:master`.
+
 ```
 npm install
 npm run dev      # play at the printed localhost URL
@@ -24,6 +30,9 @@ Difficulty lives in `src/logic/trip.ts` (distances, speed, turbo gauge) and `src
 **Controls:** ↑/↓ or swipe to change lanes · Space/→ (or hold the right edge) for turbo · ←/A (or hold the left edge)
 to brake, which also refills turbo a little · Enter / tap the phone to text your wife back · 1–4 to pick pleading lines ·
 M mute · Esc quit.
+
+**On a phone:** the first tap goes fullscreen (the ⛶ button in the top-right corner toggles it). On iPhone, Safari can't do
+fullscreen for web pages, so use Share → Add to Home Screen and open it from there.
 
 **On the road:** traffic comes in rows that never block all three lanes; crosswalks (more crowded on later trips),
 crossroads with a traffic light (brake and wait, or turbo through; run the red and the police come after you),
