@@ -5,6 +5,7 @@ import { caption } from '../fx/Bubble';
 import { TALK } from '../fonts';
 import { ENTRANCE } from '../logic/pleadLines';
 import { homeLine, lineFrom } from '../logic/lines';
+import { voice } from '../audio/voice';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP } from './common';
 import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, waitRead } from './room';
@@ -50,7 +51,8 @@ export class Home extends Phaser.Scene {
     // Proud entrance.
     await tweenP(this, { targets: r.dad, x: SPOTS.dad.x, duration: 260, ease: 'Quad.out' });
     r.dad.setFace('wide', 'smile').setPose('up');
-    sayAt(this, r, 'man', r.dad, lineFrom('plead.entrance', ENTRANCE), { ms: 1300 });
+    const fam = voice('family');
+    sayAt(this, r, 'man', r.dad, fam?.text ?? lineFrom('plead.entrance', ENTRANCE), { ms: fam?.ms ?? 1300 });
     await this.w(1300);
     r.bag.setVisible(true).setY(-200);
     r.bananas.setVisible(true).setY(-400);

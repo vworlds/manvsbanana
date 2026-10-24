@@ -9,6 +9,7 @@ npm run dev:lan  # also serve on your network (0.0.0.0): open the printed Networ
 npm test         # logic tests (ripeness timer, pleading)
 npm run build    # typecheck + production build in dist/
 npm run art      # regenerate the SVG art in public/assets from scripts/gen-art.mjs
+npm run voice    # re-cut the voice clips from the video into public/audio/vo (cut points in scripts/cut-voice.mjs)
 ```
 
 **Loop:** drive home before the bananas rot. Trip 1 is easy; each later trip is longer and the bananas ripen faster.
@@ -32,3 +33,8 @@ and roadworks (traffic keeps one lane free for you). The rules that guarantee th
 **Debug URLs:** `?scene=drive|home|plead|finale|store`, `?fastripe=8` (bananas rot 8x faster), `?trip=4` (start on a later trip),
 `?events=crossroad,works,crosswalk` (force the first road events), `?park=trash|lady|kid|tree|parked`
 (force the crash-park ending).
+
+**Voice clips:** the iconic lines ("Oh shit shit shit shit…", "Don't turn yellow", "Family! I have bananas!",
+"Banana emergency!…", "No.", "I tried so hard", "Father has failed.", "I am father now.") are cut from the original short
+into `public/audio/vo/`. That audio belongs to Explosm: fine for playing privately, but if you ever publish the game,
+get permission or delete that folder. The game then falls back to text-only lines.

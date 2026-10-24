@@ -5,6 +5,7 @@ import { SHOUT, TALK } from '../fonts';
 import { dealRound, familyOrder, reaction, redeemed, resultOf, score, startingRespect, threshold, type Choice, type Member, type Mood, type Result, type Tone } from '../logic/plead';
 import { EMERGENCY, ENTRANCE, PARDON, PROMISE } from '../logic/pleadLines';
 import { lineFrom } from '../logic/lines';
+import { voice } from '../audio/voice';
 import { state } from '../state/GameState';
 import { commonKeys, tweenP } from './common';
 import { addFlies, buildRoom, crashPark, cut, H, sayAt, SPOTS, W, type Room, waitRead } from './room';
@@ -63,7 +64,8 @@ export class Plead extends Phaser.Scene {
     // He storms in.
     await tweenP(this, { targets: r.dad, x: SPOTS.dad.x, duration: 260, ease: 'Quad.out' });
     r.dad.setFace('wide', 'open').setPose('up').shout(600);
-    sayAt(this, r, 'man', r.dad, lineFrom('plead.entrance', ENTRANCE), { ms: 1300 });
+    const fam = voice('family');
+    sayAt(this, r, 'man', r.dad, fam?.text ?? lineFrom('plead.entrance', ENTRANCE), { ms: fam?.ms ?? 1300 });
     await this.w(1300);
 
     // Bag slam.
@@ -75,10 +77,19 @@ export class Plead extends Phaser.Scene {
     this.cameras.main.shake(200, 0.015);
     addFlies(this, r, 4);
     r.dad.setPose('reach');
+    // straight from the short: the meltdown at the table
+    const fb = voice('fuck_bananas');
+    if (fb) {
+      r.dad.setFace('wide', 'open').setPose('up').shout(fb.ms);
+      sayAt(this, r, 'man', r.dad, fb.text, { ms: fb.ms });
+      await this.w(fb.ms);
+      r.dad.setPose('reach');
+    }
 
     cut(this, SPOTS.dad.x + 40, SPOTS.dad.y + 30, 1.7);
     r.dad.setFace('angry', 'open').shout(1600);
-    sayAt(this, r, 'man', r.dad, lineFrom('plead.emergency', EMERGENCY), { ms: 2200, dy: 150, size: 30 });
+    const em = voice('emergency');
+    sayAt(this, r, 'man', r.dad, em?.text ?? lineFrom('plead.emergency', EMERGENCY), { ms: em?.ms ?? 2200, dy: 150, size: 30 });
     await this.w(2300);
 
     // The stare.

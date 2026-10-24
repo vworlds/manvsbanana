@@ -21,6 +21,19 @@ function writeBool(k: string, v: boolean) {
   }
 }
 
+const onUnlock: (() => void)[] = [];
+/** Run `f` once the audio context exists (after the first user gesture). */
+export function whenAudioReady(f: () => void) {
+  if (ctx) f();
+  else onUnlock.push(f);
+}
+export const audio = () => (ctx && master ? { ctx, master } : null);
+
+/** Lower the music while someone is talking. */
+export function duckMusic(on: boolean) {
+  if (ctx && musicGain) musicGain.gain.setTargetAtTime(on ? 0.07 : 0.35, ctx.currentTime, 0.08);
+}
+
 /** Call from a user gesture. */
 export function unlock() {
   if (!ctx) {
@@ -32,6 +45,7 @@ export function unlock() {
     master.connect(ctx.destination);
     musicGain = ctx.createGain();
     musicGain.gain.value = 0.35;
+    for (const f of onUnlock) f();
     musicGain.connect(master);
   }
   if (ctx.state === 'suspended') void ctx.resume();

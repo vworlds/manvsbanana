@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BODY_RES, FACE_RES } from '../art/Person';
 import { debug, state } from '../state/GameState';
+import { preloadVoices } from '../audio/voice';
 
 const FACES = [
   'head_plain', 'man_head', 'man_hair', 'kid_hair', 'kid_head', 'stubble', 'glasses', 'wife_head',
@@ -24,6 +25,7 @@ export class Boot extends Phaser.Scene {
   }
 
   preload() {
+    preloadVoices();
     const { width, height } = this.scale;
     const bar = this.add.rectangle(width / 2 - 200, height / 2, 0, 16, 0xf7d93a).setOrigin(0, 0.5);
     this.add.rectangle(width / 2, height / 2, 404, 20).setStrokeStyle(2, 0xffffff);

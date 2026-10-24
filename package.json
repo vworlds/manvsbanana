@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "art": "node scripts/gen-art.mjs",
-    "dev:lan": "vite --host 0.0.0.0"
+    "dev:lan": "vite --host 0.0.0.0",
+    "voice": "node scripts/cut-voice.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

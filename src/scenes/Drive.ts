@@ -5,6 +5,7 @@ import { music, setTempo, sfx } from '../audio/sfx';
 import { bus } from '../bus';
 import { SHOUT } from '../fonts';
 import { readTime } from '../fx/Bubble';
+import { voice, type ClipId } from '../audio/voice';
 import { crash, freshen, isRotten, stageOf, tick, type Stage } from '../logic/ripeness';
 import {
   crowdSize,
@@ -87,6 +88,7 @@ export class Drive extends Phaser.Scene {
   private playerCar!: Car;
   private exhaust!: Phaser.GameObjects.Particles.ParticleEmitter;
   private lane = 1;
+  private clipsUsed = new Set<string>();
   private ripeness = 0;
   private stage: Stage = 'green';
   private elapsed = 0;
@@ -134,6 +136,7 @@ export class Drive extends Phaser.Scene {
 
   init(data: { mode?: 'new' | 'redeemed' | 'delivery' }) {
     this.things = [];
+    this.clipsUsed = new Set();
     this.lane = 1;
     this.ripeness = 0;
     this.stage = 'green';
@@ -231,7 +234,8 @@ export class Drive extends Phaser.Scene {
     this.cameras.main.fadeIn(250);
     const mode = this.registry.get('driveMode');
     const smug = mode === 'new' && state.generation > 1;
-    const line =
+    const first = mode === 'new' && state.generation === 1 && state.trip === 1;
+    const line = () =>
       mode === 'redeemed'
         ? driveLine('start_redeemed')
         : mode === 'delivery'
@@ -239,7 +243,11 @@ export class Drive extends Phaser.Scene {
           : smug
             ? driveLine('start_new_son')
             : driveLine('start_new');
-    this.time.delayedCall(350, () => this.cutIn(line, smug ? 'smug' : 'worried', smug ? 'smirk' : 'grit', 1500));
+    this.time.delayedCall(350, () => {
+      // the very first trip opens exactly like the short
+      const v = first ? voice('intro') : null;
+      this.cutIn(v?.text ?? line(), smug ? 'smug' : 'worried', smug ? 'smirk' : 'grit', v?.ms ?? 1500);
+    });
   }
 
   // ------------------------------------------------------------- building
@@ -296,6 +304,14 @@ export class Drive extends Phaser.Scene {
     music('none');
     this.scene.stop('Hud');
     this.scene.start('Title');
+  }
+
+  /** Play a clip from the short at most once per trip. */
+  private clip(id: ClipId) {
+    if (this.clipsUsed.has(id)) return null;
+    const v = voice(id);
+    if (v) this.clipsUsed.add(id);
+    return v;
   }
 
   // ------------------------------------------------------------- speech
@@ -378,7 +394,12 @@ export class Drive extends Phaser.Scene {
     } else {
       c.add(this.add.image(walkX, ROAD_TOP + 4, 'crosswalk').setOrigin(0.5, 0));
       c.add(this.add.image(90, ROAD_TOP + 2, 'yield').setOrigin(0.5, 1).setScale(0.6));
-      if (Math.random() < 0.6) this.time.delayedCall(500, () => this.say(driveLine('crosswalk_seen'), 'angry', 'grit'));
+      this.time.delayedCall(500, () => {
+        // first crosswalk of a trip: the short's "come on, come on, come on"
+        const v = this.clip('come_on');
+        if (v) this.say(v.text, 'angry', 'grit', v.ms);
+        else if (Math.random() < 0.6) this.say(driveLine('crosswalk_seen'), 'angry', 'grit');
+      });
     }
     this.things.push(anchor);
     this.eventAnchor = anchor;
@@ -804,7 +825,8 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setScale(0.46);
     this.tweens.add({ targets: this.carBananas, scale: 0.4, duration: 300 });
     this.pop(CAR_X, this.car.y - 120, 'BRUISED!', '#D3202A');
-    this.say(driveLine('crash'), 'angry', 'open');
+    const v = this.clip('fuck');
+    this.say(v?.text ?? driveLine('crash'), 'angry', 'open', v?.ms);
   }
 
   private hitPed(t: Thing) {
@@ -836,7 +858,8 @@ export class Drive extends Phaser.Scene {
     if (t.kind === 'chant') {
       this.ripeness = freshen(this.ripeness, 0.05);
       this.invuln = 3;
-      this.say(driveLine('chant'), 'shut', 'open', 1800);
+      const v = voice('dont_turn_yellow_short');
+      this.say(v?.text ?? driveLine('chant'), 'shut', 'open', v?.ms ?? 1800);
     }
     this.pop(CAR_X + 40, this.car.y - 130, PICKUP_TEXT[t.kind], '#2EAA3A');
   }
@@ -856,7 +879,10 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setTexture(`banana_${st}`);
     bus.emit('hud:stage', st);
     if (!worse) return;
-    if (st === 'yellow') this.cutIn(driveLine('stage_yellow'), 'wide', 'open');
+    if (st === 'yellow') {
+      const v = voice('dont_turn_yellow');
+      this.cutIn(v?.text ?? driveLine('stage_yellow'), 'wide', 'open', v?.ms);
+    }
     if (st === 'spotty') this.cutIn(driveLine('stage_spotty'), 'angry', 'open');
     if (st === 'brown') this.cutIn(driveLine('stage_brown'), 'crying', 'wail');
   }
@@ -1008,8 +1034,9 @@ export class Drive extends Phaser.Scene {
     this.carBananas.setTexture('banana_brown');
     this.driver.setFace('crying', 'wail');
     sfx.sad();
-    const nooo = driveLine('rotten');
-    const noooMs = readTime(nooo, 1600);
+    const v = voice('no_no_no');
+    const nooo = v?.text ?? driveLine('rotten');
+    const noooMs = readTime(nooo, v?.ms ?? 1600);
     bus.emit('hud:cutin', { text: nooo, eyes: 'crying', mouth: 'wail', ms: noooMs, stage: 'brown' });
     this.time.delayedCall(noooMs + 100, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
